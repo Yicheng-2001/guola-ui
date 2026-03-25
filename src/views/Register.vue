@@ -1,256 +1,391 @@
-<template>
-  <div class="">
-    
-    <div class="login-container">
-        <!-- 左侧注册区域 -->
-        <div class="left-panel w-full md:w-1/2 shadow-[20px_0_60px_rgba(0,0,0,0.02)]">
-            <!-- 语言切换器 -->
-            <div class="absolute top-6 right-6 z-20">
-                <div class="relative" id="langMenuContainer">
-                    <button @click="toggleLangMenu()" class="flex items-center gap-1.5 bg-white border border-zinc-200 px-3 py-1.5 rounded-full text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:border-zinc-300 transition-all">
-                        <i data-lucide="globe" class="w-4 h-4"></i>
-                        <span id="current-lang-display">中文</span>
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div id="langDropdown" class="hidden absolute right-0 top-full mt-2 w-32 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-zinc-100 p-1.5 z-50">
-                        <button @click="selectLang('zh', '中文')" class="lang-item w-full text-left px-3 py-2 rounded-lg text-sm font-bold text-zinc-900 bg-zinc-50 transition-colors" data-i18n="lang_zh">中文</button>
-                        <button @click="selectLang('en', 'English')" class="lang-item w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors" data-i18n="lang_en">English</button>
-                    </div>
-                </div>
-            </div>
-            <div class="w-full max-w-[380px] -mt-10">
-                <!-- 注册区域内容 -->
-                <div class="animate-in fade-in duration-300">
-                <!-- Logo -->
-                <div class="mb-4">
-                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAACQCAYAAADQgbjgAAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nOy9eXgkyV3n/Y0j76y7VFVSqXSru9Xdc49tjO2xx9gYY46FPQAD9vqBF6+BNfuysLDAglkWY6+x8QsvrLleDOZ4dw0sa5blMDvGx/rYmfFc3dO31GodLal1laS6MjMi9o+UZnq6K0sttaZb6s7P82SrpcyKjIyKjF/E7wogJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJuaugtzuCrxcvOHhr6WNeg1CBJBKguu6+t8nnlHtrn3wyDEa+D7dagxKqTJtR37pmSfbXh8TExMTExPThoePHu8F8NfJTOrzyUziMTfl/g2Aj4/2Vnqvvba7VBoG8KRlu+NWIjluOYlxplmnda7/cSmd0W555WNiYmJiYg4iD4wcKgD4Sw7DA6USgASDBFA1Tfv9h/r6c1vXupbOAczAJJIRLkGJBCOSa7oE2LyhG28ZLpbuWC1BTExMTMztg97uCuw1SihhMGclQCAhCQAEEAgYqAMS/NjZS5NfTiXd1xddm5BQA+8aTUMJJQSkCiBUIKgUgHBcyzaCQJhjlf47rp1iYmJiYm4vd5xgUVJAkgCAIIBoZN3koZ50btB2rF9qNrwGgIzjJHscw9JN0+4F0GyhOXd89NCxSirlDvX29lhE+xAArVpf++RUfXH51NTk8/eNjFZu75PFxMTExMTsY+7tH8xznf9nAB6AjaxuagAwNjhcATDjIiMBLgAE4aFJAFOH+gdfsA/39vQWAcwSokuASwCz6UTuTUf6+mN1dExMTEzMnnDHrYADqUgQABREASCMMw4AbFMfvUHWQUEJGKOgnJIXfJ/JCx7PmuctuJbzvYSzcQMGACjLNdZOX5qMvaJjYmJiYvYEfrsrsNd4UlKmsaZoBSqVyBjC0M+mDEMtNBqcMlokAhAU4NJEoAQ40eDDAyEvLm4nFhdUxnE+y4n3RAuiD4AjAvnmVDIra7V1CKmUUkEA4Jnb9qAxMTExMTH7hZFKbzeAzxLCAwImQZnUiClBqASopIRv/p9LClOCc6kTVwKYPjIwUr66rIxtMU3j/xVgAQiToEQATFA4AYMbAFjKuFnztjxoTExMTMyB545YAffluuxLS4uvE5QXAdYHpVEQgJAAvmoBjIIGFFKJ8AOEgSoOKQQ81QAABbxUu0wIIYQyixEQoQQ44SQgApK2CJUaoKhpOk56QCPLTNdBGFW6bsjnL46LW94AMTExMTExt5qkbWoA5jiMgBJTghlSR0pS4koQTYJpksCQILqkVJMgTGrEkmBcAlQSwjedsIZesgLOujY3TfPTIIYwkZJgluTEkQS2BDWlyVMSgI/Q2asFoAlg2tL1Hy4nknECj5iYmJiYjhx4JywW2m6tgEpKlAKUgIcNSNUCCAUXxubaNgDjFFAi8FXDgwg8QPpKBT6Apro2LacCQJWA7qNJNwDZRECboACIImgGGwAYg8Y5h6kBmg6g0PC810tQ/ZY2QkxMTEzMgePAq6A3k2l4XBIERMGRFmpGE/AlIIEALQAAJQy+17r0wLF731pdmL8ASgBCCSFEcc7lmcnx4OpyFQiBRBMtAgoGSSiIBAR8cKUh4ASAAgIFQQSIolAgoXS+c1Nsx8TExMTsEQdeAC/X6r5t... [truncated]" class="w-32 md:w-36 transition-transform hover:scale-105 cursor-pointer">
-                </div>
-                <!-- 标题 -->
-                <div class="mb-6 text-left">
-                    <h2 class="text-2xl font-bold text-zinc-900 tracking-tight" data-i18n="register_title">注册账号</h2>
-                    <p class="text-sm text-zinc-400 mt-1 font-serif" data-i18n="register_subtitle">开启您的 AI 创作之旅。</p>
-                </div>
-
-                <!-- 注册表单 -->
-                <div class="space-y-5">
-                    <!-- 第一步：邮箱与验证码 -->
-                    <div v-if="step === 1" class="space-y-4 animate-in fade-in duration-300">
-                        <div class="relative group">
-                            <input type="email" data-placeholder="phone_number" placeholder="邮箱" class="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-5 py-4 text-sm outline-none focus:border-zinc-400 focus:bg-white transition-all shadow-inner">
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="text" data-placeholder="verification_code" placeholder="验证码" class="flex-1 bg-zinc-50 border border-zinc-200 rounded-2xl px-5 py-4 text-sm outline-none focus:border-zinc-400 focus:bg-white transition-all shadow-inner">
-                            <button id="verify-btn" @click="startCountdown()" class="bg-zinc-100 text-zinc-600 px-6 rounded-2xl text-xs font-bold hover:bg-zinc-200 transition-all whitespace-nowrap active:scale-95 min-w-[80px]" data-i18n="get_code">获取验证码</button>
-                        </div>
-                    </div>
-
-                    <!-- 第二步：设置密码 -->
-                    <div v-if="step === 2" class="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div class="relative group">
-                            <input type="password" data-placeholder="password" placeholder="密码" class="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-5 py-4 text-sm outline-none focus:border-zinc-400 focus:bg-white transition-all shadow-inner">
-                        </div>
-                        <div class="relative group">
-                            <input type="password" data-placeholder="confirm_password" placeholder="确认密码" class="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-5 py-4 text-sm outline-none focus:border-zinc-400 focus:bg-white transition-all shadow-inner">
-                        </div>
-                    </div>
-
-                    <!-- 按钮 -->
-                    <button v-if="step === 1" @click="step = 2" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-4 rounded-2xl transition-all transform active:scale-95 text-sm shadow-xl shadow-zinc-200 flex items-center justify-center gap-2">
-                        <span data-i18n="next_step">下一步</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </button>
-                    <button v-else @click="$router.push('/workbench')" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-4 rounded-2xl transition-all transform active:scale-95 text-sm shadow-xl shadow-zinc-200 flex items-center justify-center gap-2">
-                        <span data-i18n="register_now">立即注册</span> <i data-lucide="check" class="w-4 h-4"></i>
-                    </button>
-
-                    <div class="mt-6 text-center text-xs font-medium text-zinc-500">
-                        <span data-i18n="have_account">已有账号？</span>
-                        <span @click="$router.push('/')" class="cursor-pointer text-zinc-900 hover:underline transition-colors" data-i18n="go_login">立即登录</span>
-                    </div>
-                </div>
-                </div>
-            </div>
-            
-            <!-- 底部版权 -->
-            <div class="absolute bottom-8 text-[10px] text-zinc-300">
-                © 2026 GuolaYa AI. All Rights Reserved.
-            </div>
+﻿<template>
+  <div class="auth-page">
+    <div class="auth-shell">
+      <div class="auth-left" id="langMenuContainer">
+        <div class="lang-wrap">
+          <button @click="toggleLangMenu" class="lang-trigger">
+            <Globe class="icon-16" />
+            <span id="current-lang-display">中文</span>
+            <ChevronDown class="icon-14" />
+          </button>
+          <div id="langDropdown" class="lang-dropdown" data-open="false">
+            <button
+              @click="selectLang('zh')"
+              class="lang-item"
+              data-lang="zh"
+              data-i18n="lang_zh"
+            >
+              中文
+            </button>
+            <button
+              @click="selectLang('en')"
+              class="lang-item"
+              data-lang="en"
+              data-i18n="lang_en"
+            >
+              English
+            </button>
+          </div>
         </div>
 
-        <!-- 右侧艺术展示区域 -->
-        <div class="right-panel bg-[#121212]">
-            <div id="blob1" class="floating-blob w-[400px] h-[400px] top-[-100px] right-[-100px]" style="background-color: #3b82f6;"></div>
-            <div id="blob2" class="floating-blob w-[300px] h-[300px] bottom-[-50px] left-[-50px]" style="animation-delay: -5s; background-color: #a855f7;"></div>
-            
-            <div class="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
-                <div class="relative w-full aspect-video rounded-[32px] overflow-hidden border border-white/10 shadow-2xl mb-12">
-                    <img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=1200" class="w-full h-full object-cover opacity-60">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                    <div class="absolute bottom-8 left-8 right-8 text-left">
-                        <div class="inline-block px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] text-white font-bold mb-3">AI 艺术精选</div>
-                        <h3 class="text-xl font-bold text-white mb-2">「折叠空间的几何美学」</h3>
-                        <p class="text-xs text-zinc-400 font-serif line-clamp-2">探索超现实主义与数字艺术的结合，发现未知的维度。</p>
-                    </div>
-                </div>
-                
-                <div class="space-y-2">
-                    <p class="text-3xl font-extrabold text-white tracking-tighter" style="line-height: 1.4;">
-                        <span data-i18n="slogan_prefix">过啦一下，你就是</span><span id="mode-word" class="mode-word-slot transition-colors duration-300 ease-in-out">艺术</span><span data-i18n="slogan_suffix">大师。</span>
-                    </p>
-                    <p class="text-zinc-500 text-sm font-serif" data-i18n="slogan_en">Input imagination, output the world.</p>
-                </div>
+        <div class="auth-main">
+          <h2 class="auth-title" data-i18n="register_title">注册账号</h2>
+          <p class="auth-copy" data-i18n="register_subtitle">
+            开启您的 AI 创作之旅。
+          </p>
+
+          <div v-if="step === 1" class="form-col">
+            <input
+              type="email"
+              data-placeholder="phone_number"
+              placeholder="邮箱"
+              class="auth-input"
+            />
+            <div class="code-row">
+              <input
+                type="text"
+                data-placeholder="verification_code"
+                placeholder="验证码"
+                class="auth-input"
+              />
+              <button
+                id="verify-btn"
+                @click="startCountdown"
+                class="code-btn"
+                data-i18n="get_code"
+              >
+                获取验证码
+              </button>
             </div>
+            <button @click="step = 2" class="primary-btn">
+              <span data-i18n="next_step">下一步</span>
+              <ArrowRight class="icon-16" />
+            </button>
+          </div>
+
+          <div v-else class="form-col">
+            <input
+              type="password"
+              data-placeholder="password"
+              placeholder="密码"
+              class="auth-input"
+            />
+            <input
+              type="password"
+              data-placeholder="confirm_password"
+              placeholder="确认密码"
+              class="auth-input"
+            />
+            <button @click="$router.push('/workbench')" class="primary-btn">
+              <span data-i18n="register_now">立即注册</span>
+              <Check class="icon-16" />
+            </button>
+          </div>
+
+          <div class="auth-footline">
+            <span data-i18n="have_account">已有账号？</span>
+            <span
+              @click="$router.push('/')"
+              class="jump-link"
+              data-i18n="go_login"
+              >立即登录</span
+            >
+          </div>
         </div>
+      </div>
+
+      <div class="auth-right">
+        <div class="auth-right-card">
+          <p class="slogan">
+            <span data-i18n="slogan_prefix">过啦一下，你就是</span>
+            <span id="mode-word">艺术</span>
+            <span data-i18n="slogan_suffix">大师。</span>
+          </p>
+          <p class="auth-copy" data-i18n="slogan_en">
+            Input imagination, output the world.
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted } from "vue";
+import { Globe, ChevronDown, ArrowRight, Check } from "lucide-vue-next";
+import { useLanguage } from "../i18n/useLanguage";
+import { applyI18nToDom, syncLangItemActiveState } from "../i18n/dom";
 
-const router = useRouter()
-const step = ref(1)
+const { currentLang, setLanguage, getLanguageLabel, t } = useLanguage();
 
-        // --------- 多语言系统 (i18n) ---------
-        const i18nData = {
-            zh: {
-                lang_zh: "中文",
-                lang_en: "English",
-                register_title: "注册账号",
-                register_subtitle: "开启您的 AI 创作之旅。",
-                phone_number: "邮箱",
-                verification_code: "验证码",
-                password: "密码",
-                confirm_password: "确认密码",
-                get_code: "获取验证码",
-                code_sent: "验证码已发送至邮箱，请注意查收",
-                next_step: "下一步",
-                register_now: "立即注册",
-                have_account: "已有账号？",
-                go_login: "立即登录",
-                slogan_prefix: "过啦一下，你就是",
-                slogan_suffix: "大师。",
-                slogan_en: "Input imagination, output the world.",
-                mode_artist: "艺术",
-                mode_storybook: "绘本"
-            },
-            en: {
-                lang_zh: "中文",
-                lang_en: "English",
-                register_title: "Register Account",
-                register_subtitle: "Start your AI creation journey.",
-                phone_number: "Email",
-                verification_code: "Verification Code",
-                password: "Password",
-                confirm_password: "Confirm Password",
-                get_code: "Get Code",
-                code_sent: "Verification code sent to email, please check your inbox.",
-                next_step: "Next Step",
-                register_now: "Register Now",
-                have_account: "Already have an account?",
-                go_login: "Login Now",
-                slogan_prefix: "With GuolaYa, you're a ",
-                slogan_suffix: " Master.",
-                slogan_en: "Input imagination, output the world.",
-                mode_artist: "Art",
-                mode_storybook: "Story"
-            },
-        };
+const step = ref(1);
+let isArtist = true;
+let outsideClickHandler = null;
+let timer = null;
+let countdown = 0;
 
-        function getCurrentLang() { return localStorage.getItem('guolaya-lang') || 'zh'; }
-        function setCurrentLang(lang) { localStorage.setItem('guolaya-lang', lang); }
+function refreshLanguageUI() {
+  const lang = currentLang.value;
+  const currentLangDisplay = document.getElementById("current-lang-display");
+  if (currentLangDisplay) currentLangDisplay.innerText = getLanguageLabel(lang);
 
-        // 创意模式词状态 (艺术/绘本)
-        let isArtist = true;
+  applyI18nToDom(document);
+  syncLangItemActiveState(lang, document);
 
-        function applyTranslations(lang) {
-            const data = i18nData[lang];
-            if (!data) return;
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (data[key]) el.innerHTML = data[key];
-            });
-            document.querySelectorAll('[data-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-placeholder');
-                if (data[key]) el.placeholder = data[key];
-            });
-        }
+  const modeWord = document.getElementById("mode-word");
+  if (modeWord)
+    modeWord.textContent = isArtist ? t("mode_artist") : t("mode_storybook");
+}
 
-        function toggleLangMenu() { document.getElementById('langDropdown').classList.toggle('hidden'); }
+function toggleLangMenu() {
+  const dropdown = document.getElementById("langDropdown");
+  if (!dropdown) return;
+  const isOpen = dropdown.dataset.open === "true";
+  dropdown.dataset.open = isOpen ? "false" : "true";
+}
 
-        function selectLang(langCode, langLabel) {
-            document.getElementById('current-lang-display').innerText = langLabel;
-            document.getElementById('langDropdown').classList.add('hidden');
-            setCurrentLang(langCode);
-            applyTranslations(langCode);
+function selectLang(langCode) {
+  setLanguage(langCode);
 
-            // 更新模式词 - 直接使用 langCode 参数
-            const modeWord = document.getElementById('mode-word');
-            if (modeWord && i18nData[langCode]) {
-                modeWord.textContent = isArtist ? i18nData[langCode].mode_artist : i18nData[langCode].mode_storybook;
-            }
-        }
+  const dropdown = document.getElementById("langDropdown");
+  if (dropdown) dropdown.dataset.open = "false";
 
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-6 py-3 rounded-full text-sm font-medium shadow-lg z-[200]';
-            toast.style.cssText = 'animation: fadeInDown 0.3s ease-out;';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.animation = 'fadeOutUp 0.3s ease-out';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
+  refreshLanguageUI();
+}
 
-        let countdown = 0;
-        let timer = null;
-        function startCountdown() {
-            const btn = document.getElementById('verify-btn');
-            if (!btn || countdown > 0) return;
-            const lang = getCurrentLang();
-            const data = i18nData[lang] || i18nData['zh'];
-            showToast(data.code_sent);
-            countdown = 60;
-            btn.disabled = true;
-            btn.textContent = countdown + 's';
-            timer = setInterval(() => {
-                countdown--;
-                if (countdown <= 0) {
-                    clearInterval(timer);
-                    btn.textContent = '再次发送';
-                    btn.disabled = false;
-                } else {
-                    btn.textContent = countdown + 's';
-                }
-            }, 1000);
-        }
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "auth-toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 2000);
+}
+
+function startCountdown() {
+  const btn = document.getElementById("verify-btn");
+  if (!btn || countdown > 0) return;
+
+  showToast(t("code_sent"));
+
+  countdown = 60;
+  btn.disabled = true;
+  btn.textContent = countdown + "s";
+
+  timer = setInterval(() => {
+    countdown--;
+
+    if (countdown <= 0) {
+      clearInterval(timer);
+      btn.disabled = false;
+      btn.textContent = t("resend_code");
+    } else {
+      btn.textContent = countdown + "s";
+    }
+  }, 1000);
+}
 
 onMounted(() => {
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-    const savedLang = getCurrentLang();
-    const langLabels = { zh: '中文', en: 'English' };
-    document.getElementById('current-lang-display').innerText = langLabels[savedLang];
-    applyTranslations(savedLang);
-    document.addEventListener('click', (e) => {
-        const langContainer = document.getElementById('langMenuContainer');
-        if (langContainer && !langContainer.contains(e.target)) {
-            document.getElementById('langDropdown')?.classList.add('hidden');
-        }
-    });
-})
+  refreshLanguageUI();
+
+  outsideClickHandler = (e) => {
+    const menu = document.getElementById("langMenuContainer");
+    const dropdown = document.getElementById("langDropdown");
+    if (menu && !menu.contains(e.target) && dropdown) {
+      dropdown.dataset.open = "false";
+    }
+  };
+
+  document.addEventListener("click", outsideClickHandler);
+});
 
 onUnmounted(() => {
-    if (timer) clearInterval(timer);
-})
+  if (outsideClickHandler)
+    document.removeEventListener("click", outsideClickHandler);
+  if (timer) clearInterval(timer);
+});
 </script>
 
-<style scoped>
-        #mode-word { font-family: 'ZCOOL KuaiLe', 'STKaiti', 'KaiTi', 'Kaiti SC', cursive !important; font-weight: 400 !important; font-size: 1.2em; color: #4DB8FF; display: inline-flex; align-items: center; justify-content: center; min-width: 2.8em; margin: 0 0.08em; white-space: nowrap; line-height: 1; transition: color 300ms ease; font-synthesis: none; -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; }
-        .login-container { height: 100vh; display: flex; }
-        .left-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: white; padding: 40px; position: relative; z-index: 10; }
-        .right-panel { flex: 1.2; position: relative; overflow: hidden; display: none; }
-        @media (min-width: 768px) { .right-panel { display: block; } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        .floating-blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.4; animation: float 10s ease-in-out infinite; transition: background-color 2s ease-in-out; }
+<style scoped lang="scss">
+.auth-page {
+  background: #f7f7f8;
+  min-height: 100vh;
+}
+.auth-shell {
+  display: flex;
+  min-height: 100vh;
+}
+.auth-left {
+  position: relative;
+  flex: 1;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+.auth-right {
+  flex: 1;
+  display: none;
+  background: #121212;
+  color: #fff;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+}
+.auth-right-card {
+  max-width: 420px;
+}
+.auth-main {
+  width: 100%;
+  max-width: 380px;
+}
+.auth-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #18181b;
+  margin: 0;
+}
+.auth-copy {
+  margin-top: 8px;
+  color: #a1a1aa;
+  font-size: 14px;
+}
+.form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 24px;
+}
+.auth-input {
+  border: 1px solid #e4e4e7;
+  border-radius: 14px;
+  background: #fafafa;
+  padding: 14px 16px;
+  font-size: 14px;
+  outline: none;
+}
+.auth-input:focus {
+  border-color: #a1a1aa;
+  background: #fff;
+}
+.code-row {
+  display: flex;
+  gap: 10px;
+}
+.code-row .auth-input {
+  flex: 1;
+}
+.code-btn {
+  border: 0;
+  border-radius: 14px;
+  padding: 0 16px;
+  background: #f4f4f5;
+  color: #3f3f46;
+  font-weight: 700;
+}
+.primary-btn {
+  border: 0;
+  border-radius: 14px;
+  background: #18181b;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+}
+.auth-footline {
+  margin-top: 18px;
+  font-size: 12px;
+  color: #71717a;
+  display: flex;
+  gap: 8px;
+}
+.jump-link {
+  color: #18181b;
+  cursor: pointer;
+}
+.slogan {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.4;
+  margin: 0;
+}
+#mode-word {
+  color: #4db8ff;
+  display: inline-flex;
+  margin: 0 0.1em;
+  transform: skewX(-10deg);
+}
+.lang-wrap {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+}
+.lang-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e4e4e7;
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 12px;
+  color: #52525b;
+}
+.lang-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 128px;
+  padding: 6px;
+  border: 1px solid #f4f4f5;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  display: none;
+}
+.lang-dropdown[data-open="true"] {
+  display: block;
+}
+.lang-item {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  padding: 8px 12px;
+  text-align: left;
+  color: #71717a;
+}
+.lang-item[data-active="true"] {
+  background: #fafafa;
+  color: #18181b;
+  font-weight: 700;
+}
+.icon-16 {
+  width: 16px;
+  height: 16px;
+}
+.icon-14 {
+  width: 14px;
+  height: 14px;
+}
+.auth-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #18181b;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  z-index: 999;
+}
+@media (min-width: 768px) {
+  .auth-right {
+    display: flex;
+  }
+}
 </style>
