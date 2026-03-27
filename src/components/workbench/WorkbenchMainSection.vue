@@ -125,27 +125,56 @@
                                         <div class="mb-5">
                                             <div class="flex justify-between items-center mb-2">
                                                 <span class="text-sm font-bold text-zinc-900" data-i18n="duration">生成时长</span>
-                                                <div class="flex items-center gap-1">
-                                                    <!-- 分钟输入 -->
-                                                    <input type="number" id="custom-duration-min" min="0" max="3" value="0" 
-                                                           class="w-12 px-1 py-1 text-xs font-mono font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-lg text-center focus:outline-none focus:border-zinc-400"
-                                                           @input="updateCustomDurationFromTime()">
-                                                    <span class="text-xs text-zinc-500">分</span>
-                                                    <!-- 秒输入 -->
-                                                    <input type="number" id="custom-duration-sec" min="0" max="59" value="5" 
-                                                           class="w-12 px-1 py-1 text-xs font-mono font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-lg text-center focus:outline-none focus:border-zinc-400"
-                                                           @input="updateCustomDurationFromTime()">
-                                                    <span class="text-xs text-zinc-500">秒</span>
-                                                </div>
                                             </div>
                                             <div id="home-multi-agent-warning" class="hidden text-xs text-orange-600 bg-orange-50 p-2.5 rounded-lg border border-orange-200 flex items-start gap-2 mb-3">
                                                 <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
                                                 <span>超过10秒后生成的画面为多Agent并行结果</span>
                                             </div>
-                                            <input type="range" min="5" max="180" step="1" value="5" id="custom-duration-slider" class="w-full accent-zinc-900" @input="updateCustomDuration($event.currentTarget.value)">
-                                            <div class="flex justify-between text-[10px] text-zinc-400 mt-1">
-                                                <span>5s</span>
-                                                <span>3m</span>
+                                            <div class="rounded-xl border border-zinc-200 overflow-hidden bg-zinc-50/60">
+                                                <div class="px-3 py-2.5 bg-white border-b border-zinc-200">
+                                                    <div class="flex flex-wrap items-center gap-2">
+                                                        <div class="flex items-center gap-1">
+                                                            <input
+                                                                type="number"
+                                                                id="custom-duration-min"
+                                                                min="0"
+                                                                max="3"
+                                                                value="0"
+                                                                class="w-14 px-1.5 py-1.5 text-xs font-mono font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-lg text-center focus:outline-none focus:border-zinc-400"
+                                                                @input="updateCustomDurationFromTime()"
+                                                            >
+                                                            <span class="text-xs text-zinc-500">分</span>
+                                                        </div>
+                                                        <div class="flex items-center gap-1">
+                                                            <input
+                                                                type="number"
+                                                                id="custom-duration-sec"
+                                                                min="0"
+                                                                max="999"
+                                                                value="5"
+                                                                class="w-14 px-1.5 py-1.5 text-xs font-mono font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-lg text-center focus:outline-none focus:border-zinc-400"
+                                                                @input="updateCustomDurationFromTime()"
+                                                            >
+                                                            <span class="text-xs text-zinc-500">秒</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="px-3 py-3">
+                                                    <input
+                                                        type="range"
+                                                        min="5"
+                                                        max="180"
+                                                        step="1"
+                                                        value="5"
+                                                        id="custom-duration-slider"
+                                                        class="w-full accent-zinc-900"
+                                                        @input="updateCustomDuration($event.currentTarget.value)"
+                                                    >
+                                                    <div class="flex justify-between text-[10px] text-zinc-400 mt-1">
+                                                        <span>5s</span>
+                                                        <span>3m</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         
@@ -349,27 +378,50 @@
                                 <span class="create-section-label text-sm font-bold text-zinc-900" data-i18n="duration">生成时长</span>
                                 <span class="text-xs font-mono text-amber-500 font-bold" data-i18n-consume-points><span id="duration-cost">10</span></span>
                             </div>
-                            <div class="mb-3">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-xs font-bold text-zinc-900"></span>
-                                    <div class="flex items-center gap-1">
-                                        <!-- 分钟输入 -->
-                                        <input type="number" id="duration-min" min="0" max="3" value="0" 
-                                               class="create-serif-ui w-12 px-1 py-1 text-sm font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-lg text-center focus:outline-none focus:border-zinc-400"
-                                               @input="updateDurationFromTime()">
-                                        <span class="text-sm text-zinc-500">分</span>
-                                        <!-- 秒输入 -->
-                                        <input type="number" id="duration-sec" min="0" max="59" value="5" 
-                                               class="create-serif-ui w-12 px-1 py-1 text-sm font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-lg text-center focus:outline-none focus:border-zinc-400"
-                                               @input="updateDurationFromTime()">
-                                        <span class="text-sm text-zinc-500">秒</span>
+                            <div class="mb-3 rounded-xl border border-zinc-200 overflow-hidden bg-zinc-50/60">
+                                <div class="px-3 py-2.5 bg-white border-b border-zinc-200">
+                                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                                        <div class="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                id="duration-min"
+                                                min="0"
+                                                max="3"
+                                                value="0"
+                                                class="create-serif-ui w-14 px-1.5 py-1.5 text-sm font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-lg text-center focus:outline-none focus:border-zinc-400"
+                                                @input="updateDurationFromTime()"
+                                            >
+                                            <span class="text-sm text-zinc-500">分</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                id="duration-sec"
+                                                min="0"
+                                                max="999"
+                                                value="5"
+                                                class="create-serif-ui w-14 px-1.5 py-1.5 text-sm font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-lg text-center focus:outline-none focus:border-zinc-400"
+                                                @input="updateDurationFromTime()"
+                                            >
+                                            <span class="text-sm text-zinc-500">秒</span>
+                                        </div>
                                     </div>
-                                    <span class="text-xs font-bold text-zinc-900"></span>
                                 </div>
-                                <input type="range" id="duration-slider" min="1" max="36" value="1" class="w-full accent-zinc-900" @input="updateDurationFromSlider($event.currentTarget.value)">
-                                <div class="flex justify-between text-[10px] text-zinc-400 mt-1">
-                                    <span>5秒</span>
-                                    <span>3分</span>
+                                <div class="px-3 py-3">
+                                    <input
+                                        type="range"
+                                        id="duration-slider"
+                                        min="5"
+                                        max="180"
+                                        step="1"
+                                        value="5"
+                                        class="w-full accent-zinc-900"
+                                        @input="updateDurationFromSlider($event.currentTarget.value)"
+                                    >
+                                    <div class="flex justify-between text-[10px] text-zinc-400 mt-1">
+                                        <span>5秒</span>
+                                        <span>3分</span>
+                                    </div>
                                 </div>
                             </div>
                             <div id="multi-agent-warning" class="hidden text-xs text-orange-600 bg-orange-50 p-2.5 rounded-lg border border-orange-200 flex items-start gap-2">

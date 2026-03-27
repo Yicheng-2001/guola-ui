@@ -782,7 +782,7 @@ onMounted(() => {
             }
 
             // 初始化生成时长滑块和输入框
-            updateDurationFromSlider(1);
+            updateDurationFromSlider(5);
             updateCustomDuration(5);
 
             // 点击外部关闭语言菜单
@@ -1270,6 +1270,69 @@ onMounted(() => {
             }
         }
 
+        const sliderAnimationState = new WeakMap();
+        function animateSliderToValue(slider, targetValue, duration = 180) {
+            if (!slider) return;
+            const min = Number(slider.min || 0);
+            const max = Number(slider.max || targetValue);
+            const target = Math.min(max, Math.max(min, Number(targetValue)));
+            const start = Number(slider.value || target);
+            if (!Number.isFinite(target) || !Number.isFinite(start)) return;
+            if (Math.abs(target - start) < 0.0001) {
+                slider.value = target;
+                return;
+            }
+
+            const prev = sliderAnimationState.get(slider);
+            if (prev?.rafId) cancelAnimationFrame(prev.rafId);
+
+            const startTime = performance.now();
+            const delta = target - start;
+            const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+            const tick = (now) => {
+                const progress = Math.min(1, (now - startTime) / duration);
+                slider.value = start + delta * easeOutCubic(progress);
+                if (progress < 1) {
+                    const rafId = requestAnimationFrame(tick);
+                    sliderAnimationState.set(slider, { rafId });
+                } else {
+                    slider.value = target;
+                    sliderAnimationState.delete(slider);
+                }
+            };
+
+            const rafId = requestAnimationFrame(tick);
+            sliderAnimationState.set(slider, { rafId });
+        }
+
+        function normalizeDurationInput(mins, secs) {
+            let normalizedMins = Number.isFinite(mins) ? mins : 0;
+            let normalizedSecs = Number.isFinite(secs) ? secs : 0;
+
+            if (normalizedMins < 0) normalizedMins = 0;
+            if (normalizedSecs < 0) normalizedSecs = 0;
+
+            if (normalizedSecs >= 60) {
+                normalizedMins += Math.floor(normalizedSecs / 60);
+                normalizedSecs = normalizedSecs % 60;
+            }
+
+            if (normalizedMins > 3) {
+                normalizedMins = 3;
+                normalizedSecs = 0;
+            }
+
+            if (normalizedMins === 3 && normalizedSecs > 0) {
+                normalizedSecs = 0;
+            }
+
+            return {
+                mins: normalizedMins,
+                secs: normalizedSecs
+            };
+        }
+
         function updateCustomDuration(val) {
             // 将秒数转换为分和秒，同步更新输入框
             const totalSeconds = parseInt(val) || 5;
@@ -1295,12 +1358,11 @@ onMounted(() => {
             // 从分和秒输入框获取值
             let mins = parseInt(document.getElementById('custom-duration-min').value) || 0;
             let secs = parseInt(document.getElementById('custom-duration-sec').value) || 0;
-            
-            // 限制范围
-            if (mins < 0) mins = 0;
-            if (mins > 3) mins = 3;
-            if (secs < 0) secs = 0;
-            if (secs > 59) secs = 59;
+            const normalized = normalizeDurationInput(mins, secs);
+            mins = normalized.mins;
+            secs = normalized.secs;
+            document.getElementById('custom-duration-min').value = mins;
+            document.getElementById('custom-duration-sec').value = secs;
             
             // 计算总秒数
             let totalSeconds = mins * 60 + secs;
@@ -1317,7 +1379,7 @@ onMounted(() => {
             
             // 同步更新滑块
             const slider = document.getElementById('custom-duration-slider');
-            if (slider) slider.value = totalSeconds;
+            animateSliderToValue(slider, totalSeconds);
             
             // 更新警告
             const warning = document.getElementById('home-multi-agent-warning');
@@ -1577,8 +1639,11 @@ onMounted(() => {
         }
 
         function updateDurationFromSlider(value) {
-            // value范围是1-36，对应5秒-180秒（每隔5秒）
-            const seconds = value * 5;
+            // value范围是5-180，对应5秒-180秒（1秒粒度）
+            let seconds = Number(value);
+            if (!Number.isFinite(seconds)) seconds = 5;
+            if (seconds < 5) seconds = 5;
+            if (seconds > 180) seconds = 180;
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             
@@ -1605,33 +1670,28 @@ onMounted(() => {
             // 从分和秒输入框获取值
             let mins = parseInt(document.getElementById('duration-min').value) || 0;
             let secs = parseInt(document.getElementById('duration-sec').value) || 0;
+            const normalized = normalizeDurationInput(mins, secs);
+            mins = normalized.mins;
+            secs = normalized.secs;
+            document.getElementById('duration-min').value = mins;
+            document.getElementById('duration-sec').value = secs;
             
-            // 限制范围
-            if (mins < 0) mins = 0;
-            if (mins > 3) mins = 3;
-            if (secs < 0) secs = 0;
-            if (secs > 59) secs = 59;
-            
-            // 计算总秒数，然后转换为步数（每步5秒）
+            // 计算总秒数
             let totalSeconds = mins * 60 + secs;
             if (totalSeconds < 5) totalSeconds = 5;
             if (totalSeconds > 180) totalSeconds = 180;
-            
-            // 将秒数对齐到5秒的倍数
-            const steps = Math.round(totalSeconds / 5);
-            const alignedSeconds = steps * 5;
-            
+
             // 同步更新滑块
             const slider = document.getElementById('duration-slider');
-            if (slider) slider.value = steps;
+            animateSliderToValue(slider, totalSeconds);
             
             // 计算积分消耗
-            const cost = Math.round((alignedSeconds / 5) * 10);
+            const cost = Math.round((totalSeconds / 5) * 10);
             updateDurationCost(cost);
             
             // 更新警告
             const warning = document.getElementById('multi-agent-warning');
-            if (alignedSeconds > 10) {
+            if (totalSeconds > 10) {
                 warning.classList.remove('hidden');
             } else {
                 warning.classList.add('hidden');
