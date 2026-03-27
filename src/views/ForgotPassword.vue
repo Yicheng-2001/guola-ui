@@ -1,94 +1,62 @@
 ﻿<template>
   <div class="auth-page">
     <div class="auth-shell">
-      <div class="auth-left" id="langMenuContainer">
-        <div class="lang-wrap">
+      <div class="auth-left">
+        <div class="lang-wrap" ref="langMenuContainerRef">
           <button @click="toggleLangMenu" class="lang-trigger">
             <Globe class="icon-16" />
-            <span id="current-lang-display">中文</span>
+            <span>{{ currentLangLabel }}</span>
             <ChevronDown class="icon-14" />
           </button>
-          <div id="langDropdown" class="lang-dropdown" data-open="false">
+          <div class="lang-dropdown" :data-open="isLangMenuOpen ? 'true' : 'false'">
             <button
               @click="selectLang('zh')"
               class="lang-item"
               data-lang="zh"
-              data-i18n="lang_zh"
+              :data-active="currentLang === 'zh' ? 'true' : 'false'"
             >
-              中文
+              {{ t('lang_zh') }}
             </button>
             <button
               @click="selectLang('en')"
               class="lang-item"
               data-lang="en"
-              data-i18n="lang_en"
+              :data-active="currentLang === 'en' ? 'true' : 'false'"
             >
-              English
+              {{ t('lang_en') }}
             </button>
           </div>
         </div>
 
         <div class="auth-main">
-          <h2 class="auth-title" data-i18n="forgot_title">找回密码</h2>
-          <p class="auth-copy" data-i18n="forgot_subtitle">
-            重置您的账户密码。
-          </p>
+          <h2 class="auth-title">{{ t('forgot_title') }}</h2>
+          <p class="auth-copy">{{ t('forgot_subtitle') }}</p>
 
           <div v-if="step === 1" class="form-col">
-            <input
-              type="email"
-              data-placeholder="phone_number"
-              placeholder="邮箱"
-              class="auth-input"
-            />
+            <input type="email" :placeholder="t('phone_number')" class="auth-input" />
             <div class="code-row">
-              <input
-                type="text"
-                data-placeholder="verification_code"
-                placeholder="验证码"
-                class="auth-input"
-              />
-              <button
-                id="verify-btn"
-                @click="startCountdown"
-                class="code-btn"
-                data-i18n="get_code"
-              >
-                获取验证码
+              <input type="text" :placeholder="t('verification_code')" class="auth-input" />
+              <button @click="startCountdown" class="code-btn" :disabled="countdown > 0">
+                {{ verifyButtonText }}
               </button>
             </div>
             <button @click="step = 2" class="primary-btn">
-              <span data-i18n="next_step">下一步</span>
+              <span>{{ t('next_step') }}</span>
               <ArrowRight class="icon-16" />
             </button>
           </div>
 
           <div v-else class="form-col">
-            <input
-              type="password"
-              data-placeholder="new_password"
-              placeholder="新密码"
-              class="auth-input"
-            />
-            <input
-              type="password"
-              data-placeholder="confirm_password"
-              placeholder="确认密码"
-              class="auth-input"
-            />
+            <input type="password" :placeholder="t('new_password')" class="auth-input" />
+            <input type="password" :placeholder="t('confirm_password')" class="auth-input" />
             <button @click="$router.push('/')" class="primary-btn">
-              <span data-i18n="reset_now">重置密码</span>
+              <span>{{ t('reset_now') }}</span>
               <Check class="icon-16" />
             </button>
           </div>
 
           <div class="auth-footline">
-            <span
-              @click="$router.push('/')"
-              class="jump-link"
-              data-i18n="back_login"
-              >返回登录</span
-            >
+            <span @click="$router.push('/')" class="jump-link">{{ t('back_login') }}</span>
           </div>
         </div>
       </div>
@@ -96,13 +64,11 @@
       <div class="auth-right">
         <div class="auth-right-card">
           <p class="slogan">
-            <span data-i18n="slogan_prefix">过啦一下，你就是</span>
-            <span id="mode-word">艺术</span>
-            <span data-i18n="slogan_suffix">大师。</span>
+            <span>{{ t('slogan_prefix') }}</span>
+            <span id="mode-word">{{ isArtist ? t('mode_artist') : t('mode_storybook') }}</span>
+            <span>{{ t('slogan_suffix') }}</span>
           </p>
-          <p class="auth-copy" data-i18n="slogan_en">
-            Input imagination, output the world.
-          </p>
+          <p class="auth-copy">{{ t('slogan_en') }}</p>
         </div>
       </div>
     </div>
@@ -110,45 +76,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { Globe, ChevronDown, ArrowRight, Check } from "lucide-vue-next";
-import { useLanguage, applyI18nToDom, syncLangItemActiveState } from "../i18n";
+import { useLanguage } from "../i18n";
 
 const { currentLang, setLanguage, getLanguageLabel, t } = useLanguage();
 
 const step = ref(1);
-let isArtist = true;
-let outsideClickHandler = null;
+const isArtist = true;
+const isLangMenuOpen = ref(false);
+const langMenuContainerRef = ref(null);
+const currentLangLabel = computed(() => getLanguageLabel(currentLang.value));
+
+const countdown = ref(0);
+const hasSentCode = ref(false);
 let timer = null;
-let countdown = 0;
+let outsideClickHandler = null;
 
-function refreshLanguageUI() {
-  const lang = currentLang.value;
-  const currentLangDisplay = document.getElementById("current-lang-display");
-  if (currentLangDisplay) currentLangDisplay.innerText = getLanguageLabel(lang);
-
-  applyI18nToDom(document);
-  syncLangItemActiveState(lang, document);
-
-  const modeWord = document.getElementById("mode-word");
-  if (modeWord)
-    modeWord.textContent = isArtist ? t("mode_artist") : t("mode_storybook");
-}
+const verifyButtonText = computed(() => {
+  if (countdown.value > 0) return `${countdown.value}s`;
+  return hasSentCode.value ? t("resend_code") : t("get_code");
+});
 
 function toggleLangMenu() {
-  const dropdown = document.getElementById("langDropdown");
-  if (!dropdown) return;
-  const isOpen = dropdown.dataset.open === "true";
-  dropdown.dataset.open = isOpen ? "false" : "true";
+  isLangMenuOpen.value = !isLangMenuOpen.value;
 }
 
 function selectLang(langCode) {
   setLanguage(langCode);
-
-  const dropdown = document.getElementById("langDropdown");
-  if (dropdown) dropdown.dataset.open = "false";
-
-  refreshLanguageUI();
+  isLangMenuOpen.value = false;
 }
 
 function showToast(message) {
@@ -163,36 +119,29 @@ function showToast(message) {
 }
 
 function startCountdown() {
-  const btn = document.getElementById("verify-btn");
-  if (!btn || countdown > 0) return;
+  if (countdown.value > 0) return;
 
+  hasSentCode.value = true;
   showToast(t("code_sent"));
 
-  countdown = 60;
-  btn.disabled = true;
-  btn.textContent = countdown + "s";
+  countdown.value = 60;
+  if (timer) clearInterval(timer);
 
   timer = setInterval(() => {
-    countdown--;
+    countdown.value -= 1;
 
-    if (countdown <= 0) {
+    if (countdown.value <= 0) {
+      countdown.value = 0;
       clearInterval(timer);
-      btn.disabled = false;
-      btn.textContent = t("resend_code");
-    } else {
-      btn.textContent = countdown + "s";
+      timer = null;
     }
   }, 1000);
 }
 
 onMounted(() => {
-  refreshLanguageUI();
-
   outsideClickHandler = (e) => {
-    const menu = document.getElementById("langMenuContainer");
-    const dropdown = document.getElementById("langDropdown");
-    if (menu && !menu.contains(e.target) && dropdown) {
-      dropdown.dataset.open = "false";
+    if (langMenuContainerRef.value && !langMenuContainerRef.value.contains(e.target)) {
+      isLangMenuOpen.value = false;
     }
   };
 
@@ -200,9 +149,14 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (outsideClickHandler)
+  if (outsideClickHandler) {
     document.removeEventListener("click", outsideClickHandler);
-  if (timer) clearInterval(timer);
+  }
+
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
 });
 </script>
 

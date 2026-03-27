@@ -18,31 +18,31 @@
       </div>
 
       <div class="intro-block">
-        <h2 class="intro-title">支付成功</h2>
-        <p class="intro-copy">您的算力积分已安全存入账户</p>
+        <h2 class="intro-title">{{ t('pay_success_title') }}</h2>
+        <p class="intro-copy">{{ t('pay_success_desc') }}</p>
       </div>
 
       <div class="summary-card">
         <div class="summary-row">
-          <span class="summary-label">充值额度</span>
-          <span class="summary-value">+1500 积分</span>
+          <span class="summary-label">{{ t('pay_success_recharge_amount') }}</span>
+          <span class="summary-value">{{ t('buy_points_amount_format', { points: '+1500' }) }}</span>
         </div>
         <div class="summary-row">
-          <span class="summary-label">支付金额</span>
-          <span class="summary-value">￥90.00</span>
+          <span class="summary-label">{{ t('pay_success_paid_amount') }}</span>
+          <span class="summary-value">{{ t('buy_price_format', { price: '90.00' }) }}</span>
         </div>
         <div class="summary-row-last">
-          <span class="summary-label">当前余额</span>
-          <span class="summary-value-highlight">2,700 积分</span>
+          <span class="summary-label">{{ t('pay_success_current_balance') }}</span>
+          <span class="summary-value-highlight">{{ t('buy_points_amount_format', { points: '2,700' }) }}</span>
         </div>
       </div>
 
       <div class="action-row">
         <button @click="$router.push('/buy-points')" class="action-btn-secondary">
-          返回详情
+          {{ t('pay_success_back_detail') }}
         </button>
         <button @click="$router.push('/workbench')" class="action-btn-primary">
-          去创作
+          {{ t('pay_success_go_create') }}
         </button>
       </div>
     </div>
@@ -52,8 +52,10 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const { t } = useI18n()
 
 function createConfetti() {
   const container = document.getElementById('confetti')

@@ -139,7 +139,46 @@
     home_prompt_placeholder: '输入你的视频创意，例如：清晨海边薄雾与日出',
     create_prompt_placeholder: '请输入你想生成的视频描述',
     gallery_search: '搜索官方精选',
-    search_assets: '搜索作品标题或关键词'
+    search_assets: '搜索作品标题或关键词',
+
+    login_footer: '© 2026 GuolaYa AI. All Rights Reserved.',
+    login_logo_alt: 'GuolaYa 标志',
+    login_hero_image_alt: '登录页主视觉图',
+    login_hero_badge: 'AI 艺术精选',
+    login_hero_feature_title: '“微观宇宙的绚丽爆发”',
+    login_hero_feature_desc: '由 GuolaYa 艺术家模型生成。探索物理引擎级的光影渲染效果，捕捉每一个灵感瞬间。',
+
+    back_to_workbench: '返回工作台',
+    buy_points_logo_alt: 'GuolaYa Logo',
+    buy_points_avatar_alt: '用户头像',
+    buy_points_page_title: '购买算力积分',
+    buy_points_page_desc: '积分为虚拟商品，采用先收费后服务方式。充值成功后不支持退款或反向兑换为人民币，有效期为 1 年。',
+    buy_points_badge_recommended: '性价比优选',
+    buy_points_badge_workshop: '工作室首选',
+    buy_points_plan_desc_500: '约可生成 25 个 1080P 视频',
+    buy_points_plan_desc_750: '约可生成 37 个 1080P 视频',
+    buy_points_plan_desc_1500: '约可生成 75 个 1080P 视频',
+    buy_points_plan_desc_2250: '重度创作者推荐',
+    buy_points_plan_desc_4500: '海量生成，畅享无忧',
+    buy_points_plan_desc_9000: '企业级算力包',
+    buy_points_order_details: '订单详情',
+    buy_points_order_amount: '充值额度',
+    buy_points_account_pay: '账户实付',
+    buy_points_pay_method: '支付方式',
+    buy_pay_wechat: '微信',
+    buy_pay_alipay: '支付宝',
+    buy_points_pay_now: '立即支付',
+    buy_points_footer: '© 2026 北京织知玄华智能科技有限公司. 保留所有权利。',
+    buy_points_amount_format: '{points} 积分',
+    buy_price_format: '¥ {price}',
+
+    pay_success_title: '支付成功',
+    pay_success_desc: '您的算力积分已安全存入账户',
+    pay_success_recharge_amount: '充值额度',
+    pay_success_paid_amount: '支付金额',
+    pay_success_current_balance: '当前余额',
+    pay_success_back_detail: '返回详情',
+    pay_success_go_create: '去创作'
   }
 
 export default zh
