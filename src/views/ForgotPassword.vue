@@ -112,8 +112,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { Globe, ChevronDown, ArrowRight, Check } from "lucide-vue-next";
-import { useLanguage } from "../i18n/useLanguage";
-import { applyI18nToDom, syncLangItemActiveState } from "../i18n/dom";
+import { useLanguage, applyI18nToDom, syncLangItemActiveState } from "../i18n";
 
 const { currentLang, setLanguage, getLanguageLabel, t } = useLanguage();
 
