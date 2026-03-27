@@ -14,6 +14,67 @@ import WorkbenchModals from '../components/workbench/WorkbenchModals.vue'
 
 const router = useRouter()
 
+const aestheticGalleryItems = [
+  { img: '/discover-top/discover-01.png', title: '粉云猫猫', author: 'GuolaYa Picks', views: '2.1w', ratioClass: 'aspect-[1/1]' },
+  { img: '/discover-top/discover-02.png', title: '异星花园', author: 'GuolaYa Picks', views: '1.8w', ratioClass: 'aspect-[9/16]' },
+  { img: '/discover-top/discover-03.png', title: '雨夜侧影', author: 'GuolaYa Picks', views: '2.4w', ratioClass: 'aspect-[9/16]' },
+  { img: '/discover-top/discover-04.png', title: '柯尔鸭肖像', author: 'GuolaYa Picks', views: '1.3w', ratioClass: 'aspect-[9/16]' },
+  { img: '/discover-top/discover-05.png', title: '古典漫游', author: 'GuolaYa Picks', views: '1.9w', ratioClass: 'aspect-[9/16]' },
+  { img: '/discover-top/discover-06.png', title: '枝头小雀', author: 'GuolaYa Picks', views: '1.1w', ratioClass: 'aspect-[9/16]' },
+  { img: '/discover-top/discover-07.png', title: '黄昏街角', author: 'GuolaYa Picks', views: '2.7w', ratioClass: 'aspect-[9/16]' },
+  { img: '/discover-top/discover-08.png', title: '城堡旧梦', author: 'GuolaYa Picks', views: '2.2w', ratioClass: 'aspect-[9/16]' },
+  { img: '/discover-top/discover-09.png', title: '格纸秘密', author: 'GuolaYa Picks', views: '1.6w', ratioClass: 'aspect-[9/16]' },
+  { img: '/discover-top/discover-10.png', title: '雨中点火', author: 'GuolaYa Picks', views: '2.0w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop', title: '星际漫游', author: 'SpaceX_Fan', views: '8.9w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800&auto=format&fit=crop', title: '废土文明重建', author: '视觉日记', views: '4.2w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800&auto=format&fit=crop', title: '落日余晖', author: 'Cinematic', views: '6.7w', ratioClass: 'aspect-[4/5]' },
+  { img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=800&auto=format&fit=crop', title: '微光', author: 'Tech_Bro', views: '1.1w', ratioClass: 'aspect-[1/1]' },
+  { img: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=800&auto=format&fit=crop', title: '折叠空间', author: 'Abstract_AI', views: '5.5w', ratioClass: 'aspect-[3/4]' },
+  { img: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=800&auto=format&fit=crop', title: '遥远星系', author: 'StarGazer', views: '3.2w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=800&auto=format&fit=crop', title: '赛博朋克城市', author: 'CyberPunk', views: '15.6w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800&auto=format&fit=crop', title: '山川壮丽', author: 'NatureLover', views: '22.1w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=800&auto=format&fit=crop', title: '森林秘境', author: 'GreenSoul', views: '7.8w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop', title: '城市之光', author: 'UrbanEye', views: '18.5w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=800&auto=format&fit=crop', title: '海浪轻语', author: 'OceanDream', views: '11.2w', ratioClass: 'aspect-[1/1]' },
+  { img: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=800&auto=format&fit=crop', title: '高山湖泊', author: 'PeakView', views: '14.7w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1505144808419-1957a94ca61e?q=80&w=800&auto=format&fit=crop', title: '沙滩漫步', author: 'BeachLife', views: '6.3w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop', title: '云雾山脉', author: 'CloudRider', views: '8.9w', ratioClass: 'aspect-[2/3]' },
+  { img: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop', title: '迷雾森林', author: 'MysticWoods', views: '5.1w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=800&auto=format&fit=crop', title: '阳光穿透', author: 'SunRay', views: '13.4w', ratioClass: 'aspect-[3/4]' },
+  { img: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=800&auto=format&fit=crop', title: '金色麦田', author: 'HarvestMoon', views: '4.8w', ratioClass: 'aspect-[1/1]' },
+  { img: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop', title: '湖光山色', author: 'LakeView', views: '19.2w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1433086966358-54859d0ed716?q=80&w=800&auto=format&fit=crop', title: '瀑布飞流', author: 'WaterFall', views: '7.5w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800&auto=format&fit=crop', title: '星空璀璨', author: 'StarLight', views: '25.6w', ratioClass: 'aspect-[1/1]' },
+  { img: 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?q=80&w=800&auto=format&fit=crop', title: '峡谷深处', author: 'DeepCanyon', views: '9.8w', ratioClass: 'aspect-[4/5]' },
+  { img: 'https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?q=80&w=800&auto=format&fit=crop', title: '秋叶飘零', author: 'AutumnLeaf', views: '6.7w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=800&auto=format&fit=crop', title: '瑞士风光', author: 'SwissAlps', views: '16.3w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=800&auto=format&fit=crop', title: '热带天堂', author: 'Tropical', views: '12.8w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=800&auto=format&fit=crop', title: '极光之夜', author: 'Aurora', views: '28.4w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=800&auto=format&fit=crop', title: '树影婆娑', author: 'TreeShadow', views: '3.9w', ratioClass: 'aspect-[3/4]' },
+  { img: 'https://images.unsplash.com/photo-1504567961542-e24d9439a724?q=80&w=800&auto=format&fit=crop', title: '晨曦初照', author: 'MorningGlow', views: '8.2w', ratioClass: 'aspect-[1/1]' },
+  { img: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?q=80&w=800&auto=format&fit=crop', title: '月夜静谧', author: 'MoonLight', views: '11.7w', ratioClass: 'aspect-[2/3]' },
+  { img: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?q=80&w=800&auto=format&fit=crop', title: '深海探秘', author: 'DeepSea', views: '5.4w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1518173946687-a4c036bc1378?q=80&w=800&auto=format&fit=crop', title: '都市夜景', author: 'CityNight', views: '21.9w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1461301214746-1e790926d323?q=80&w=800&auto=format&fit=crop', title: '书页翻动', author: 'BookLover', views: '4.1w', ratioClass: 'aspect-[4/5]' },
+  { img: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop', title: '未来都市', author: 'FutureCity', views: '17.3w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=800&auto=format&fit=crop', title: '童话世界', author: 'FairyTale', views: '9.6w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1560167016-022b78a0258e?q=80&w=800&auto=format&fit=crop', title: '梦幻花园', author: 'DreamGarden', views: '6.8w', ratioClass: 'aspect-[1/1]' },
+  { img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop', title: '小桥流水', author: 'WaterBridge', views: '14.2w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?q=80&w=800&auto=format&fit=crop', title: '水墨江南', author: 'InkWash', views: '10.5w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?q=80&w=800&auto=format&fit=crop', title: '纸艺人生', author: 'PaperArt', views: '3.7w', ratioClass: 'aspect-[3/4]' },
+  { img: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800&auto=format&fit=crop', title: '油画质感', author: 'OilPaint', views: '8.1w', ratioClass: 'aspect-[4/5]' },
+  { img: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=800&auto=format&fit=crop', title: '抽象艺术', author: 'AbstractArt', views: '5.9w', ratioClass: 'aspect-[1/1]' },
+  { img: 'https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=800&auto=format&fit=crop', title: '水彩梦境', author: 'WaterColor', views: '12.3w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=800&auto=format&fit=crop', title: '极简主义', author: 'Minimalist', views: '7.4w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?q=80&w=800&auto=format&fit=crop', title: '光影交错', author: 'LightShadow', views: '15.8w', ratioClass: 'aspect-[2/3]' },
+  { img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop', title: '微观宇宙法则', author: 'Neo_Art', views: '12.4w', ratioClass: 'aspect-[3/4]' },
+  { img: 'https://images.unsplash.com/photo-1515405295579-ba7b45403062?q=80&w=800&auto=format&fit=crop', title: '建筑之美', author: 'Architecture', views: '11.2w', ratioClass: 'aspect-[3/4]' },
+  { img: 'https://images.unsplash.com/photo-1550684848-86a5d8727436?q=80&w=800&auto=format&fit=crop', title: '时光隧道', author: 'TimeTunnel', views: '6.5w', ratioClass: 'aspect-[9/16]' },
+  { img: 'https://images.unsplash.com/photo-1495195129352-aeb325a55b65?q=80&w=800&auto=format&fit=crop', title: '餐桌美学', author: 'FoodArt', views: '9.1w', ratioClass: 'aspect-[1/1]' },
+  { img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=800&auto=format&fit=crop', title: '几何之美', author: 'Geometry', views: '4.6w', ratioClass: 'aspect-[16/9]' },
+  { img: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=800&auto=format&fit=crop', title: '自然纹理', author: 'NatureTex', views: '8.8w', ratioClass: 'aspect-[4/5]' }
+]
+
 
         // --------- 多语言系统 (i18n) ---------
         const i18nData = {
@@ -535,6 +596,7 @@ const sidebarProps = {
   toggleWechatGroup
 }
 const mainSectionProps = {
+  galleryItems: aestheticGalleryItems,
   handleCreateDragLeave,
   handleCreateDragOver,
   handleCreateDrop,
@@ -548,6 +610,7 @@ const mainSectionProps = {
   handleHomePaste,
   handleScroll,
   openModal,
+  openVideoModal,
   removeCreateImage,
   removeHomeImage,
   selectLang,
@@ -654,7 +717,6 @@ onMounted(() => {
         if(typeof window !== 'undefined') window.setCreateGenType = setCreateGenType;
         if(typeof window !== 'undefined') window.handleCreateDragLeave = handleCreateDragLeave;
         if(typeof window !== 'undefined') window.handleCreateDrop = handleCreateDrop;
-        if(typeof window !== 'undefined') window.renderHomeGallery = renderHomeGallery;
         if(typeof window !== 'undefined') window.updateCustomDuration = updateCustomDuration;
         if(typeof window !== 'undefined') window.setCustomRatio = setCustomRatio;
         if(typeof window !== 'undefined') window.shareToXiaohongshu = shareToXiaohongshu;
@@ -673,7 +735,7 @@ onMounted(() => {
             const titleEl = document.getElementById('home-main-title');
             if(titleEl) titleObserver.observe(titleEl);
 
-            renderHomeGallery();
+            adjustFabMenuPosition();
             renderAssetGrid();
 
             // 初始化语言
@@ -1639,118 +1701,6 @@ onMounted(() => {
         function setAssetFilter(el) {
             document.querySelectorAll('#asset-filters .asset-filter').forEach(item => item.className = "asset-filter px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-white text-zinc-500 border border-zinc-200 hover:text-zinc-900 hover:border-zinc-300");
             el.className = "asset-filter px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-zinc-900 text-white shadow-sm";
-        }
-
-        const getGridClass = (ratioClass) => {
-            if (ratioClass === 'aspect-[16/9]') return 'col-span-1 row-span-2';
-            if (ratioClass === 'aspect-[1/1]') return 'col-span-1 row-span-3';
-            return 'col-span-1 row-span-5';
-        };
-
-        const renderCardHTML = (item) => `
-            <div class="relative group overflow-hidden cursor-pointer bg-zinc-100 hover:opacity-95 transition-opacity rounded-none shadow-none ${getGridClass(item.ratioClass)}"
-                 onclick="openVideoModal(this)"
-                 data-img="${item.img}"
-                 data-title="${item.title}"
-                 data-author="${item.author}">
-                <img src="${item.img}" alt="${item.title}" class="w-full h-full object-cover" loading="lazy" />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div class="absolute bottom-0 left-0 right-0 p-2 md:p-3 2xl:p-4 flex flex-col gap-0.5 md:gap-1">
-                    <span class="text-[10px] md:text-xs 2xl:text-sm font-bold text-white truncate drop-shadow-md">${item.title}</span>
-                    <div class="flex items-center justify-between text-[8px] md:text-[10px] 2xl:text-xs font-medium text-zinc-300">
-                        <span>@${item.author}</span>
-                        <span class="flex items-center gap-1"><i data-lucide="play" class="w-2 h-2 2xl:w-2.5 2xl:h-2.5 fill-current text-white/80"></i> ${item.views}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        function renderHomeGallery() {
-            const featuredCardData = [
-                { img: "/discover-top/discover-01.png", title: "粉云猫猫", author: "GuolaYa Picks", views: "2.1w", ratioClass: "aspect-[1/1]" },
-                { img: "/discover-top/discover-02.png", title: "异星花园", author: "GuolaYa Picks", views: "1.8w", ratioClass: "aspect-[9/16]" },
-                { img: "/discover-top/discover-03.png", title: "雨夜侧影", author: "GuolaYa Picks", views: "2.4w", ratioClass: "aspect-[9/16]" },
-                { img: "/discover-top/discover-04.png", title: "柯尔鸭肖像", author: "GuolaYa Picks", views: "1.3w", ratioClass: "aspect-[9/16]" },
-                { img: "/discover-top/discover-05.png", title: "古典漫游", author: "GuolaYa Picks", views: "1.9w", ratioClass: "aspect-[9/16]" },
-                { img: "/discover-top/discover-06.png", title: "枝头小雀", author: "GuolaYa Picks", views: "1.1w", ratioClass: "aspect-[9/16]" },
-                { img: "/discover-top/discover-07.png", title: "黄昏街角", author: "GuolaYa Picks", views: "2.7w", ratioClass: "aspect-[9/16]" },
-                { img: "/discover-top/discover-08.png", title: "城堡旧梦", author: "GuolaYa Picks", views: "2.2w", ratioClass: "aspect-[9/16]" },
-                { img: "/discover-top/discover-09.png", title: "格纸秘密", author: "GuolaYa Picks", views: "1.6w", ratioClass: "aspect-[9/16]" },
-                { img: "/discover-top/discover-10.png", title: "雨中点火", author: "GuolaYa Picks", views: "2.0w", ratioClass: "aspect-[9/16]" }
-            ];
-
-            const galleryData = [
-                // 第一行
-                { img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop", title: "星际漫游", author: "SpaceX_Fan", views: "8.9w", ratioClass: "aspect-[16/9]" },
-                { img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800&auto=format&fit=crop", title: "废土文明重建", author: "视觉日记", views: "4.2w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800&auto=format&fit=crop", title: "落日余晖", author: "Cinematic", views: "6.7w", ratioClass: "aspect-[4/5]" },
-                
-                // 第二行 - 添加更多 9:16 竖版
-                { img: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=800&auto=format&fit=crop", title: "微光", author: "Tech_Bro", views: "1.1w", ratioClass: "aspect-[1/1]" },
-                { img: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=800&auto=format&fit=crop", title: "折叠空间", author: "Abstract_AI", views: "5.5w", ratioClass: "aspect-[3/4]" },
-                { img: "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=800&auto=format&fit=crop", title: "遥远星系", author: "StarGazer", views: "3.2w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=800&auto=format&fit=crop", title: "赛博朋克城市", author: "CyberPunk", views: "15.6w", ratioClass: "aspect-[9/16]" },
-                
-                // 第三行 - 16:9 横版
-                { img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800&auto=format&fit=crop", title: "山川壮丽", author: "NatureLover", views: "22.1w", ratioClass: "aspect-[16/9]" },
-                { img: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=800&auto=format&fit=crop", title: "森林秘境", author: "GreenSoul", views: "7.8w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop", title: "城市之光", author: "UrbanEye", views: "18.5w", ratioClass: "aspect-[16/9]" },
-                { img: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=800&auto=format&fit=crop", title: "海浪轻语", author: "OceanDream", views: "11.2w", ratioClass: "aspect-[1/1]" },
-                { img: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=800&auto=format&fit=crop", title: "高山湖泊", author: "PeakView", views: "14.7w", ratioClass: "aspect-[16/9]" },
-                
-                // 第四行 - 混合比例
-                { img: "https://images.unsplash.com/photo-1505144808419-1957a94ca61e?q=80&w=800&auto=format&fit=crop", title: "沙滩漫步", author: "BeachLife", views: "6.3w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop", title: "云雾山脉", author: "CloudRider", views: "8.9w", ratioClass: "aspect-[2/3]" },
-                { img: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop", title: "迷雾森林", author: "MysticWoods", views: "5.1w", ratioClass: "aspect-[16/9]" },
-                { img: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=800&auto=format&fit=crop", title: "阳光穿透", author: "SunRay", views: "13.4w", ratioClass: "aspect-[3/4]" },
-                { img: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=800&auto=format&fit=crop", title: "金色麦田", author: "HarvestMoon", views: "4.8w", ratioClass: "aspect-[1/1]" },
-                
-                // 第五行
-                { img: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop", title: "湖光山色", author: "LakeView", views: "19.2w", ratioClass: "aspect-[16/9]" },
-                { img: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?q=80&w=800&auto=format&fit=crop", title: "瀑布飞流", author: "WaterFall", views: "7.5w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800&auto=format&fit=crop", title: "星空璀璨", author: "StarLight", views: "25.6w", ratioClass: "aspect-[1/1]" },
-                { img: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?q=80&w=800&auto=format&fit=crop", title: "峡谷深处", author: "DeepCanyon", views: "9.8w", ratioClass: "aspect-[4/5]" },
-                { img: "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?q=80&w=800&auto=format&fit=crop", title: "秋叶飘零", author: "AutumnLeaf", views: "6.7w", ratioClass: "aspect-[9/16]" },
-                
-                // 第六行 - 更多竖版
-                { img: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=800&auto=format&fit=crop", title: "瑞士风光", author: "SwissAlps", views: "16.3w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=800&auto=format&fit=crop", title: "热带天堂", author: "Tropical", views: "12.8w", ratioClass: "aspect-[16/9]" },
-                { img: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=800&auto=format&fit=crop", title: "极光之夜", author: "Aurora", views: "28.4w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=800&auto=format&fit=crop", title: "树影婆娑", author: "TreeShadow", views: "3.9w", ratioClass: "aspect-[3/4]" },
-                { img: "https://images.unsplash.com/photo-1504567961542-e24d9439a724?q=80&w=800&auto=format&fit=crop", title: "晨曦初照", author: "MorningGlow", views: "8.2w", ratioClass: "aspect-[1/1]" },
-                
-                // 第七行
-                { img: "https://images.unsplash.com/photo-1507400492013-162706c8c05e?q=80&w=800&auto=format&fit=crop", title: "月夜静谧", author: "MoonLight", views: "11.7w", ratioClass: "aspect-[2/3]" },
-                { img: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?q=80&w=800&auto=format&fit=crop", title: "深海探秘", author: "DeepSea", views: "5.4w", ratioClass: "aspect-[16/9]" },
-                { img: "https://images.unsplash.com/photo-1518173946687-a4c036bc1378?q=80&w=800&auto=format&fit=crop", title: "都市夜景", author: "CityNight", views: "21.9w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1461301214746-1e790926d323?q=80&w=800&auto=format&fit=crop", title: "书页翻动", author: "BookLover", views: "4.1w", ratioClass: "aspect-[4/5]" },
-                { img: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop", title: "未来都市", author: "FutureCity", views: "17.3w", ratioClass: "aspect-[16/9]" },
-                
-                // 第八行 - 绘本风格
-                { img: "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=800&auto=format&fit=crop", title: "童话世界", author: "FairyTale", views: "9.6w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1560167016-022b78a0258e?q=80&w=800&auto=format&fit=crop", title: "梦幻花园", author: "DreamGarden", views: "6.8w", ratioClass: "aspect-[1/1]" },
-                { img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop", title: "小桥流水", author: "WaterBridge", views: "14.2w", ratioClass: "aspect-[16/9]" },
-                { img: "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?q=80&w=800&auto=format&fit=crop", title: "水墨江南", author: "InkWash", views: "10.5w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?q=80&w=800&auto=format&fit=crop", title: "纸艺人生", author: "PaperArt", views: "3.7w", ratioClass: "aspect-[3/4]" },
-                
-                // 第九行
-                { img: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800&auto=format&fit=crop", title: "油画质感", author: "OilPaint", views: "8.1w", ratioClass: "aspect-[4/5]" },
-                { img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=800&auto=format&fit=crop", title: "抽象艺术", author: "AbstractArt", views: "5.9w", ratioClass: "aspect-[1/1]" },
-                { img: "https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=800&auto=format&fit=crop", title: "水彩梦境", author: "WaterColor", views: "12.3w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=800&auto=format&fit=crop", title: "极简主义", author: "Minimalist", views: "7.4w", ratioClass: "aspect-[16/9]" },
-                { img: "https://images.unsplash.com/photo-1547891654-e66ed7ebb968?q=80&w=800&auto=format&fit=crop", title: "光影交错", author: "LightShadow", views: "15.8w", ratioClass: "aspect-[2/3]" },
-                { img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop", title: "微观宇宙法则", author: "Neo_Art", views: "12.4w", ratioClass: "aspect-[3/4]" },
-                
-                // 第十行 - 最后一行
-                { img: "https://images.unsplash.com/photo-1515405295579-ba7b45403062?q=80&w=800&auto=format&fit=crop", title: "建筑之美", author: "Architecture", views: "11.2w", ratioClass: "aspect-[3/4]" },
-                { img: "https://images.unsplash.com/photo-1550684848-86a5d8727436?q=80&w=800&auto=format&fit=crop", title: "时光隧道", author: "TimeTunnel", views: "6.5w", ratioClass: "aspect-[9/16]" },
-                { img: "https://images.unsplash.com/photo-1495195129352-aeb325a55b65?q=80&w=800&auto=format&fit=crop", title: "餐桌美学", author: "FoodArt", views: "9.1w", ratioClass: "aspect-[1/1]" },
-                { img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=800&auto=format&fit=crop", title: "几何之美", author: "Geometry", views: "4.6w", ratioClass: "aspect-[16/9]" },
-                { img: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=800&auto=format&fit=crop", title: "自然纹理", author: "NatureTex", views: "8.8w", ratioClass: "aspect-[4/5]" }
-            ];
-            document.getElementById('home-gallery').innerHTML = [...featuredCardData, ...galleryData].map(item => renderCardHTML(item)).join('');
-            if(typeof lucide !== 'undefined') lucide.createIcons();
-            adjustFabMenuPosition();
         }
 
         function adjustFabMenuPosition() {

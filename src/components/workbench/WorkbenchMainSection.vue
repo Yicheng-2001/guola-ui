@@ -200,8 +200,39 @@
                     </div>
 
                     <div class="mx-4 md:mx-6 lg:mx-8 rounded-t-[28px] overflow-hidden bg-[#fcfcfb]" id="discover-gallery-container">
-                        <div id="home-gallery" class="discover-grid grid grid-flow-dense grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 auto-rows-[56px] md:auto-rows-[68px] lg:auto-rows-[76px] gap-0">
-                            <!-- 动态注入的内容见 JS 部分的 renderHomeGallery -->
+                        <div id="home-gallery" class="discover-grid grid grid-flow-row grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 auto-rows-[56px] md:auto-rows-[68px] lg:auto-rows-[76px] gap-0">
+                            <div
+                                v-for="(item, index) in props.galleryItems || []"
+                                :key="getGalleryItemKey(item, index)"
+                                class="relative group overflow-hidden cursor-pointer bg-zinc-100 hover:opacity-95 transition-opacity rounded-none shadow-none"
+                                :class="getGalleryGridClass(item)"
+                                @click="openVideoModal($event.currentTarget)"
+                                :data-img="item.img"
+                                :data-title="item.title"
+                                :data-author="item.author"
+                            >
+                                <img
+                                    :src="item.img"
+                                    :alt="item.title || `gallery-item-${index + 1}`"
+                                    class="w-full h-full object-cover"
+                                    loading="lazy"
+                                />
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                <div class="absolute bottom-0 left-0 right-0 p-2 md:p-3 2xl:p-4 flex flex-col gap-0.5 md:gap-1">
+                                    <span class="text-[10px] md:text-xs 2xl:text-sm font-bold text-white truncate drop-shadow-md">
+                                        {{ item.title }}
+                                    </span>
+                                    <div class="flex items-center justify-between text-[8px] md:text-[10px] 2xl:text-xs font-medium text-zinc-300">
+                                        <span>@{{ item.author || 'GuolaYa' }}</span>
+                                        <span class="flex items-center gap-1">
+                                            <svg viewBox="0 0 24 24" class="w-2 h-2 2xl:w-2.5 2xl:h-2.5 fill-current text-white/80" aria-hidden="true">
+                                                <path d="M8 5v14l11-7z" />
+                                            </svg>
+                                            {{ item.views || '0' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -799,6 +830,45 @@
 <script setup>
 import { useRouter } from 'vue-router'
 const router = useRouter()
+const props = defineProps([
+  'handleCreateDragLeave',
+  'handleCreateDragOver',
+  'handleCreateDrop',
+  'handleCreateGenerate',
+  'handleCreateInput',
+  'handleHomeDragLeave',
+  'handleHomeDragOver',
+  'handleHomeDrop',
+  'handleHomeGenerate',
+  'handleHomeInput',
+  'handleHomePaste',
+  'handleScroll',
+  'openModal',
+  'openVideoModal',
+  'removeCreateImage',
+  'removeHomeImage',
+  'selectLang',
+  'setCustomRatio',
+  'setCustomRes',
+  'setHomeFilter',
+  'setHomeMode',
+  'setMessageFilter',
+  'setModel',
+  'setRatio',
+  'setResolution',
+  'switchGlobalTab',
+  'toggleCreateMode',
+  'toggleCustomDropdown',
+  'toggleHomeModeDropdown',
+  'toggleLangMenu',
+  'toggleModelDropdown',
+  'updateCreateCharCount',
+  'updateCustomDuration',
+  'updateCustomDurationFromTime',
+  'updateDurationFromSlider',
+  'updateDurationFromTime',
+  'galleryItems'
+])
 const {
   handleCreateDragLeave,
   handleCreateDragOver,
@@ -813,6 +883,7 @@ const {
   handleHomePaste,
   handleScroll,
   openModal,
+  openVideoModal,
   removeCreateImage,
   removeHomeImage,
   selectLang,
@@ -835,41 +906,18 @@ const {
   updateCustomDurationFromTime,
   updateDurationFromSlider,
   updateDurationFromTime
-} = defineProps([
-  'handleCreateDragLeave',
-  'handleCreateDragOver',
-  'handleCreateDrop',
-  'handleCreateGenerate',
-  'handleCreateInput',
-  'handleHomeDragLeave',
-  'handleHomeDragOver',
-  'handleHomeDrop',
-  'handleHomeGenerate',
-  'handleHomeInput',
-  'handleHomePaste',
-  'handleScroll',
-  'openModal',
-  'removeCreateImage',
-  'removeHomeImage',
-  'selectLang',
-  'setCustomRatio',
-  'setCustomRes',
-  'setHomeFilter',
-  'setHomeMode',
-  'setMessageFilter',
-  'setModel',
-  'setRatio',
-  'setResolution',
-  'switchGlobalTab',
-  'toggleCreateMode',
-  'toggleCustomDropdown',
-  'toggleHomeModeDropdown',
-  'toggleLangMenu',
-  'toggleModelDropdown',
-  'updateCreateCharCount',
-  'updateCustomDuration',
-  'updateCustomDurationFromTime',
-  'updateDurationFromSlider',
-  'updateDurationFromTime'
-])
+} = props
+
+const getGalleryGridClass = (item = {}) => {
+  const ratio = String(item.ratioClass || item.aspectRatio || item.ratio || '')
+    .replace(/\s/g, '')
+    .toLowerCase()
+
+  if (ratio.includes('16/9')) return 'col-span-1 row-span-2'
+  if (ratio.includes('1/1')) return 'col-span-1 row-span-3'
+  return 'col-span-1 row-span-5'
+}
+
+const getGalleryItemKey = (item = {}, index) =>
+  item.id || item.uuid || `${item.img || 'gallery'}-${item.title || 'item'}-${index}`
 </script>
