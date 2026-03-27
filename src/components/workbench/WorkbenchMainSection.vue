@@ -137,7 +137,7 @@
                                                             <input
                                                                 type="number"
                                                                 id="custom-duration-min"
-                                                                min="0"
+                                                                min="5"
                                                                 max="3"
                                                                 value="0"
                                                                 class="w-14 px-1.5 py-1.5 text-xs font-mono font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-lg text-center focus:outline-none focus:border-zinc-400"
@@ -385,7 +385,7 @@
                                             <input
                                                 type="number"
                                                 id="duration-min"
-                                                min="0"
+                                                min="5"
                                                 max="3"
                                                 value="0"
                                                 class="create-serif-ui w-14 px-1.5 py-1.5 text-sm font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-lg text-center focus:outline-none focus:border-zinc-400"

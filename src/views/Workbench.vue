@@ -439,6 +439,12 @@ const aestheticGalleryItems = [
 
         // --------- 创意模式切换 (艺术家/绘本) ---------
         let currentCreateMode = 'artist';
+        const homeCreationSettings = {
+            durationSeconds: 5,
+            resolution: '1080p',
+            ratio: '16:9',
+            promptText: ''
+        };
 
         function toggleCreateMode() {
             currentCreateMode = currentCreateMode === 'artist' ? 'storybook' : 'artist';
@@ -521,6 +527,29 @@ const aestheticGalleryItems = [
             document.documentElement.style.setProperty('--mode-word-underline', color);
         }
 
+        function syncHomeSettingsToCreate() {
+            const durationSeconds = Math.max(5, Math.min(180, Number(homeCreationSettings.durationSeconds) || 5));
+            const resolution = homeCreationSettings.resolution || '1080p';
+            const ratio = homeCreationSettings.ratio || '16:9';
+
+            setResolution(resolution);
+            setRatio(ratio);
+            updateDurationFromSlider(durationSeconds);
+            const slider = document.getElementById('duration-slider');
+            animateSliderToValue(slider, durationSeconds);
+        }
+
+        function syncHomePromptToCreate() {
+            const homeInput = document.getElementById('home-prompt-input');
+            const createInput = document.getElementById('create-prompt-textarea');
+            if (!createInput) return;
+
+            const promptText = homeInput ? homeInput.value : (homeCreationSettings.promptText || '');
+            homeCreationSettings.promptText = promptText;
+            createInput.value = promptText;
+            updateCreateCharCount();
+        }
+
         // --------- 视图与路由管理 ---------
         function switchGlobalTab(tabId) {
             document.querySelectorAll('.view-container').forEach(el => {
@@ -538,6 +567,7 @@ const aestheticGalleryItems = [
                 if (typeof setCreateGenType === 'function') {
                     setCreateGenType(currentGenType, true);
                 }
+                syncHomeSettingsToCreate();
             }
             if (tabId === 'assets') {
                 renderAssetGrid();
@@ -1153,6 +1183,7 @@ onMounted(() => {
             const count = input.value.length;
             const countEl = document.getElementById('home-char-count');
             countEl.textContent = `${count}/1000`;
+            homeCreationSettings.promptText = input.value;
             
             if (count > 1000) {
                 countEl.classList.add('text-red-500');
@@ -1172,6 +1203,7 @@ onMounted(() => {
                 return;
             }
             
+            syncHomePromptToCreate();
             switchGlobalTab('create');
         }
 
@@ -1333,6 +1365,18 @@ onMounted(() => {
             };
         }
 
+        function syncSecondInputMin(minInput, secInput) {
+            if (!minInput || !secInput) return;
+            const mins = parseInt(minInput.value) || 0;
+            const minSec = mins <= 0 ? 5 : 0;
+            secInput.min = String(minSec);
+
+            const currentSec = parseInt(secInput.value) || 0;
+            if (currentSec < minSec) {
+                secInput.value = String(minSec);
+            }
+        }
+
         function updateCustomDuration(val) {
             // 将秒数转换为分和秒，同步更新输入框
             const totalSeconds = parseInt(val) || 5;
@@ -1343,6 +1387,8 @@ onMounted(() => {
             const secInput = document.getElementById('custom-duration-sec');
             if (minInput) minInput.value = mins;
             if (secInput) secInput.value = secs;
+            syncSecondInputMin(minInput, secInput);
+            homeCreationSettings.durationSeconds = totalSeconds;
             
             const warning = document.getElementById('home-multi-agent-warning');
             if (warning) {
@@ -1363,6 +1409,12 @@ onMounted(() => {
             secs = normalized.secs;
             document.getElementById('custom-duration-min').value = mins;
             document.getElementById('custom-duration-sec').value = secs;
+            syncSecondInputMin(
+                document.getElementById('custom-duration-min'),
+                document.getElementById('custom-duration-sec')
+            );
+            mins = parseInt(document.getElementById('custom-duration-min').value) || 0;
+            secs = parseInt(document.getElementById('custom-duration-sec').value) || 0;
             
             // 计算总秒数
             let totalSeconds = mins * 60 + secs;
@@ -1375,7 +1427,12 @@ onMounted(() => {
                 const adjustedSecs = totalSeconds % 60;
                 document.getElementById('custom-duration-min').value = adjustedMins;
                 document.getElementById('custom-duration-sec').value = adjustedSecs;
+                syncSecondInputMin(
+                    document.getElementById('custom-duration-min'),
+                    document.getElementById('custom-duration-sec')
+                );
             }
+            homeCreationSettings.durationSeconds = totalSeconds;
             
             // 同步更新滑块
             const slider = document.getElementById('custom-duration-slider');
@@ -1397,6 +1454,10 @@ onMounted(() => {
                 btn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg border border-zinc-200 bg-white text-zinc-500 hover:text-zinc-900 custom-res-btn transition-colors";
             });
             el.className = "flex-1 py-1.5 text-xs font-bold rounded-lg border border-zinc-900 bg-zinc-900 text-white custom-res-btn transition-colors";
+            const value = el?.textContent?.trim()?.toLowerCase();
+            if (value === '720p' || value === '1080p') {
+                homeCreationSettings.resolution = value;
+            }
         }
 
         function setCustomRatio(el) {
@@ -1404,6 +1465,10 @@ onMounted(() => {
                 btn.className = "py-1.5 text-xs font-bold rounded-lg border border-zinc-200 bg-white text-zinc-500 hover:text-zinc-900 custom-ratio-btn transition-colors";
             });
             el.className = "py-1.5 text-xs font-bold rounded-lg border border-zinc-900 bg-zinc-900 text-white custom-ratio-btn transition-colors";
+            const value = el?.textContent?.trim();
+            if (value === '16:9' || value === '9:16' || value === '1:1') {
+                homeCreationSettings.ratio = value;
+            }
         }
 
         function openVideoModal(element) {
@@ -1652,6 +1717,7 @@ onMounted(() => {
             const secInput = document.getElementById('duration-sec');
             if (minInput) minInput.value = mins;
             if (secInput) secInput.value = secs;
+            syncSecondInputMin(minInput, secInput);
             
             // 计算积分消耗（基础10秒消耗10积分，按比例计算）
             const cost = Math.round((seconds / 5) * 10);
@@ -1675,6 +1741,12 @@ onMounted(() => {
             secs = normalized.secs;
             document.getElementById('duration-min').value = mins;
             document.getElementById('duration-sec').value = secs;
+            syncSecondInputMin(
+                document.getElementById('duration-min'),
+                document.getElementById('duration-sec')
+            );
+            mins = parseInt(document.getElementById('duration-min').value) || 0;
+            secs = parseInt(document.getElementById('duration-sec').value) || 0;
             
             // 计算总秒数
             let totalSeconds = mins * 60 + secs;
