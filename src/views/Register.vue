@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="auth-page">
     <div class="auth-shell">
       <div class="auth-left">
@@ -33,7 +33,7 @@
           <p class="auth-copy">{{ t('register_subtitle') }}</p>
 
           <div v-if="step === 1" class="form-col">
-            <input type="email" :placeholder="t('phone_number')" class="auth-input" />
+            <input type="tel" v-model="phone" :placeholder="t('phone_number')" class="auth-input" />
             <div class="code-row">
               <input type="text" :placeholder="t('verification_code')" class="auth-input" />
               <button @click="startCountdown" class="code-btn" :disabled="countdown > 0">
@@ -80,6 +80,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { Globe, ChevronDown, ArrowRight, Check } from "lucide-vue-next";
 import { useLanguage } from "../i18n";
+import { sendSms } from "../api/services";
 
 const { currentLang, setLanguage, getLanguageLabel, t } = useLanguage();
 
@@ -89,6 +90,7 @@ const isLangMenuOpen = ref(false);
 const langMenuContainerRef = ref(null);
 const currentLangLabel = computed(() => getLanguageLabel(currentLang.value));
 
+const phone = ref("");
 const countdown = ref(0);
 const hasSentCode = ref(false);
 let timer = null;
@@ -119,24 +121,33 @@ function showToast(message) {
   }, 2000);
 }
 
-function startCountdown() {
+async function startCountdown() {
   if (countdown.value > 0) return;
 
-  hasSentCode.value = true;
-  showToast(t("code_sent"));
+  try {
+    const result = await sendSms(phone.value);
+    if (result) {
+      hasSentCode.value = true;
+      showToast(t("code_sent"));
 
-  countdown.value = 60;
-  if (timer) clearInterval(timer);
+      countdown.value = 60;
+      if (timer) clearInterval(timer);
 
-  timer = setInterval(() => {
-    countdown.value -= 1;
+      timer = setInterval(() => {
+        countdown.value -= 1;
 
-    if (countdown.value <= 0) {
-      countdown.value = 0;
-      clearInterval(timer);
-      timer = null;
+        if (countdown.value <= 0) {
+          countdown.value = 0;
+          clearInterval(timer);
+          timer = null;
+        }
+      }, 1000);
+    } else {
+      showToast(t("code_send_failed"));
     }
-  }, 1000);
+  } catch (error) {
+    showToast(t("network_error"));
+  }
 }
 
 onMounted(() => {

@@ -1,4 +1,4 @@
-﻿const en = {
+const en = {
     lang_zh: '中文',
     lang_en: 'English',
 
@@ -17,6 +17,10 @@
     confirm_password: 'Confirm Password',
     get_code: 'Get Code',
     code_sent: 'Verification code sent. Please check your inbox.',
+    phone_required: 'Please enter your phone number',
+    invalid_phone: 'Please enter a valid phone number',
+    code_send_failed: 'Failed to send verification code',
+    network_error: 'Network error',
     next_step: 'Next Step',
     register_now: 'Register Now',
     have_account: 'Already have an account?',

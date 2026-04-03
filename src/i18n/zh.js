@@ -1,4 +1,4 @@
-﻿const zh = {
+const zh = {
     lang_zh: '中文',
     lang_en: 'English',
 
@@ -17,6 +17,10 @@
     confirm_password: '确认密码',
     get_code: '获取验证码',
     code_sent: '验证码已发送，请注意查收',
+    phone_required: '请输入手机号',
+    invalid_phone: '请输入有效的手机号',
+    code_send_failed: '验证码发送失败',
+    network_error: '网络错误',
     next_step: '下一步',
     register_now: '立即注册',
     have_account: '已有账号？',
