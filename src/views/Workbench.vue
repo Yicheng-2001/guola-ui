@@ -1,16 +1,17 @@
-<template>
+﻿<template>
   <div class="flex flex-col md:flex-row h-screen w-full bg-[#fbfbfa] text-zinc-900 font-sans overflow-hidden selection:bg-[#ece7dc]">
     <WorkbenchSidebar v-bind="sidebarProps" />
-    <WorkbenchMainSection v-bind="mainSectionProps" />
+    <WorkbenchMainSection v-bind="mainSectionProps" :gallery-items="galleryItems" />
     <WorkbenchModals v-bind="modalProps" />
   </div>
 </template>
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import WorkbenchSidebar from '../components/workbench/WorkbenchSidebar.vue'
 import WorkbenchMainSection from '../components/workbench/WorkbenchMainSection.vue'
 import WorkbenchModals from '../components/workbench/WorkbenchModals.vue'
+import { getPublics } from '../api/services'
 
 const router = useRouter()
 
@@ -74,6 +75,91 @@ const aestheticGalleryItems = [
   { img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=800&auto=format&fit=crop', title: '几何之美', author: 'Geometry', views: '4.6w', ratioClass: 'aspect-[16/9]' },
   { img: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=800&auto=format&fit=crop', title: '自然纹理', author: 'NatureTex', views: '8.8w', ratioClass: 'aspect-[4/5]' }
 ]
+
+const galleryItems = ref([...aestheticGalleryItems])
+
+function toDisplayCount(value) {
+  const num = Number(value)
+  if (!Number.isFinite(num) || num < 0) return '0'
+  if (num >= 10000) return `${(num / 10000).toFixed(1)}w`
+  return String(num)
+}
+
+function normalizeRatioClass(item = {}) {
+  const ratioText = String(item.ratioClass || item.aspectRatio || item.ratio || '').trim()
+  if (ratioText) {
+    if (ratioText.startsWith('aspect-[')) return ratioText
+    if (ratioText.includes(':')) {
+      const [w, h] = ratioText.split(':')
+      return `aspect-[${w}/${h}]`
+    }
+    if (ratioText.includes('/')) return `aspect-[${ratioText}]`
+  }
+  const width = Number(item.width || item.w)
+  const height = Number(item.height || item.h)
+  if (width > 0 && height > 0) return `aspect-[${width}/${height}]`
+  return 'aspect-[9/16]'
+}
+
+function normalizePublicItem(item = {}, index = 0) {
+  const img =
+    item.img ||
+    item.image ||
+    item.cover ||
+    item.cover_url ||
+    item.coverUrl ||
+    item.thumbnail ||
+    item.thumbnail_url ||
+    item.poster ||
+    ''
+  return {
+    id: item.id || item.uuid || item.public_id || `public-${index}`,
+    img,
+    title: item.title || item.name || item.prompt || item.description || `作品 ${index + 1}`,
+    author: item.author || item.nickname || item.user_name || item.username || 'GuolaYa',
+    views: toDisplayCount(item.views || item.view_count || item.play_count || item.playCount || 0),
+    ratioClass: normalizeRatioClass(item),
+  }
+}
+
+function extractPublicList(payload) {
+  if (Array.isArray(payload)) return payload
+  const candidates = [
+    payload?.data?.list,
+    payload?.data?.records,
+    payload?.data?.items,
+    payload?.data,
+    payload?.list,
+    payload?.records,
+    payload?.items,
+  ]
+  return candidates.find(Array.isArray) || []
+}
+
+async function loadPublicGallery() {
+  try {
+    const response = await getPublics(1, 10)
+    const publicList = extractPublicList(response)
+    if (!publicList.length) return
+    const mapped = publicList
+      .map((item, index) => normalizePublicItem(item, index))
+      .filter(item => Boolean(item.img))
+    if (mapped.length) {
+      galleryItems.value = mapped
+    }
+  } catch (error) {
+    const fallbackPayload = error?.data || error?.response?.data || error
+    const publicList = extractPublicList(fallbackPayload)
+    const mapped = publicList
+      .map((item, index) => normalizePublicItem(item, index))
+      .filter(item => Boolean(item.img))
+    if (mapped.length) {
+      galleryItems.value = mapped
+      return
+    }
+    console.error('加载首页瀑布流失败:', error)
+  }
+}
 
 
         // --------- 多语言系统 (i18n) ---------
@@ -626,7 +712,6 @@ const sidebarProps = {
   toggleWechatGroup
 }
 const mainSectionProps = {
-  galleryItems: aestheticGalleryItems,
   handleCreateDragLeave,
   handleCreateDragOver,
   handleCreateDrop,
@@ -678,6 +763,7 @@ const modalProps = {
   switchPointsTab
 }
 onMounted(() => {
+        loadPublicGallery()
         if(typeof window !== 'undefined') window.handleHomeDrop = handleHomeDrop;
         if(typeof window !== 'undefined') window.copyShareLink = copyShareLink;
         if(typeof window !== 'undefined') window.setGenType = setGenType;
