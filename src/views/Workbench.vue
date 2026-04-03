@@ -1,19 +1,200 @@
 ﻿<template>
   <div class="flex flex-col md:flex-row h-screen w-full bg-[#fbfbfa] text-zinc-900 font-sans overflow-hidden selection:bg-[#ece7dc]">
-    <WorkbenchSidebar v-bind="sidebarProps" />
-    <WorkbenchMainSection v-bind="mainSectionProps" :gallery-items="galleryItems" />
-    <WorkbenchModals v-bind="modalProps" />
+    <WorkbenchSidebar
+      v-bind="sidebarProps"
+      :is-logged-in="isLoggedIn"
+      :go-login="goLogin"
+      :user-display-name="userDisplayName"
+      :balance-display="balanceDisplay"
+    />
+    <WorkbenchMainSection
+      v-bind="mainSectionProps"
+      :gallery-items="galleryItems"
+      :is-logged-in="isLoggedIn"
+      :go-login="goLogin"
+      :login-display-name="loginDisplayName"
+    />
+    <WorkbenchModals
+      v-bind="modalProps"
+      :balance-display="balanceDisplay"
+    />
   </div>
 </template>
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import WorkbenchSidebar from '../components/workbench/WorkbenchSidebar.vue'
 import WorkbenchMainSection from '../components/workbench/WorkbenchMainSection.vue'
 import WorkbenchModals from '../components/workbench/WorkbenchModals.vue'
-import { getPublics } from '../api/services'
+import {
+  clearLoginToken,
+  clearLoginUserProfile,
+  creditDailySignIn,
+  getCreditBalance,
+  getCurrentUserProfile,
+  getLoginUserProfile,
+  getPublics,
+  setLoginUserProfile
+} from '../api/services'
+import cache from '@/plugins/cache'
 
 const router = useRouter()
+const isLoggedIn = ref(false)
+const loginDisplayName = ref('当前已登录')
+const userDisplayName = ref('创作者_001')
+const balance = ref(0)
+const signingIn = ref(false)
+const balanceDisplay = computed(() => formatBalanceDisplay(balance.value))
+
+function formatBalanceDisplay(value) {
+  const num = Number(value)
+  if (!Number.isFinite(num) || num < 0) return '0'
+  return new Intl.NumberFormat('zh-CN', {
+    maximumFractionDigits: 2
+  }).format(num)
+}
+
+function parseBalanceNumber(value) {
+  if (value === null || value === undefined || value === '') return null
+  const normalized = typeof value === 'string' ? value.replace(/,/g, '').trim() : value
+  const num = Number(normalized)
+  if (!Number.isFinite(num) || num < 0) return null
+  return num
+}
+
+function extractApiMessage(payload = {}) {
+  const candidates = [
+    payload?.response?.data?.message,
+    payload?.response?.data?.msg,
+    payload?.data?.message,
+    payload?.data?.msg,
+    payload?.message,
+    payload?.msg,
+    payload?.error?.message
+  ]
+  for (const item of candidates) {
+    const text = String(item || '').trim()
+    if (!text) continue
+    if (/^Request failed with status code \d+$/i.test(text)) continue
+    return text
+  }
+  return ''
+}
+
+function extractBalance(payload = {}) {
+  const candidates = [
+    payload?.data?.balance,
+    payload?.data?.data?.balance,
+    payload?.balance,
+    payload?.credit_balance,
+    payload?.data?.credit_balance
+  ]
+  for (const item of candidates) {
+    const parsed = parseBalanceNumber(item)
+    if (parsed !== null) return parsed
+  }
+  return 0
+}
+
+function resolveUserDisplayName(profile = {}) {
+  const name =
+    profile?.display_name ||
+    profile?.username ||
+    profile?.user_name ||
+    profile?.nickname ||
+    profile?.name ||
+    profile?.account ||
+    profile?.email ||
+    profile?.mobile ||
+    profile?.phone ||
+    ''
+  return String(name || '').trim()
+}
+
+function applyUserProfile(profile = null) {
+  const displayName = resolveUserDisplayName(profile)
+  userDisplayName.value = displayName || '创作者_001'
+  loginDisplayName.value = displayName || '当前已登录'
+}
+
+function getStoredToken() {
+  const token = cache.local.get('token')
+  return typeof token === 'string' ? token.trim() : ''
+}
+
+function syncLoginState() {
+  isLoggedIn.value = Boolean(getStoredToken())
+  if (!isLoggedIn.value) {
+    balance.value = 0
+    applyUserProfile(null)
+    return
+  }
+  applyUserProfile(getLoginUserProfile())
+}
+
+async function loadCurrentUserProfile() {
+  if (!getStoredToken()) return
+  try {
+    const result = await getCurrentUserProfile()
+    const profile = result?.data || result || null
+    if (profile && typeof profile === 'object') {
+      const normalized = {
+        ...profile,
+        display_name: resolveUserDisplayName(profile)
+      }
+      setLoginUserProfile(normalized)
+      applyUserProfile(normalized)
+    }
+  } catch (error) {
+    // 用户信息请求失败不阻断页面
+  }
+}
+
+async function loadCreditBalance() {
+  if (!getStoredToken()) return
+  try {
+    const result = await getCreditBalance()
+    balance.value = extractBalance(result)
+  } catch (error) {
+    // 积分余额请求失败不阻断页面
+  }
+}
+
+async function loadCurrentUserContext() {
+  if (!getStoredToken()) return
+  await Promise.allSettled([loadCurrentUserProfile(), loadCreditBalance()])
+}
+
+async function handleDailySignIn() {
+  if (signingIn.value) return
+  if (!getStoredToken()) {
+    showToast('请先登录')
+    return
+  }
+  signingIn.value = true
+  try {
+    const result = await creditDailySignIn()
+    const message = extractApiMessage(result)
+    if (message) {
+      showToast(message)
+    }
+    await loadCreditBalance()
+    closeModal('checkin-modal')
+  } catch (error) {
+    const message = extractApiMessage(error)
+    if (message) {
+      showToast(message)
+    } else {
+      showToast('签到失败')
+    }
+  } finally {
+    signingIn.value = false
+  }
+}
+
+function goLogin() {
+  router.push('/login')
+}
 
 const aestheticGalleryItems = [
   { img: '/discover-top/discover-01.png', title: '粉云猫猫', author: 'GuolaYa Picks', views: '2.1w', ratioClass: 'aspect-[1/1]' },
@@ -758,11 +939,14 @@ const modalProps = {
   copyVideoShareLink,
   downloadAsset,
   generateSimilar,
+  handleDailySignIn,
   setHomeMode,
   switchLoginTab,
   switchPointsTab
 }
 onMounted(() => {
+        syncLoginState()
+        loadCurrentUserContext()
         loadPublicGallery()
         if(typeof window !== 'undefined') window.handleHomeDrop = handleHomeDrop;
         if(typeof window !== 'undefined') window.copyShareLink = copyShareLink;
@@ -839,8 +1023,9 @@ onMounted(() => {
             if(typeof lucide !== 'undefined') lucide.createIcons();
 
             const titleObserver = new IntersectionObserver(([entry]) => {
-                const el = document.getElementById('home-main-title');
-                if (entry.isIntersecting) {
+                const el = entry?.target || document.getElementById('home-main-title');
+                if (!el || !el.classList) return;
+                if (entry?.isIntersecting) {
                     el.classList.add('opacity-100', 'translate-y-0');
                     el.classList.remove('opacity-0', 'translate-y-12');
                 } else {
@@ -1015,15 +1200,25 @@ onMounted(() => {
         }
 
         function toggleUserMenu() {
-            document.getElementById('userDropdown').classList.toggle('hidden');
+            const dropdown = document.getElementById('userDropdown');
+            if (!dropdown) return;
+            dropdown.classList.toggle('hidden');
         }
 
         function toggleWechatGroup() {
-            document.getElementById('wechatGroupDropdown').classList.toggle('hidden');
+            const dropdown = document.getElementById('wechatGroupDropdown');
+            if (!dropdown) return;
+            dropdown.classList.toggle('hidden');
         }
 
         function confirmLogout() {
             if (confirm('确定要退出登录吗？')) {
+                clearLoginToken();
+                clearLoginUserProfile();
+                syncLoginState();
+                const userDropdown = document.getElementById('userDropdown');
+                if (userDropdown) userDropdown.classList.add('hidden');
+                switchGlobalTab('home');
                 router.push('/');
             }
         }

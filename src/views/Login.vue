@@ -52,14 +52,36 @@
             <div class="form-login">
               <div class="form-fields-wrap">
                 <div class="input-wrap">
-                  <input type="email" :placeholder="t('phone_number')" class="login-input" />
+                  <input
+                    type="text"
+                    v-model="username"
+                    :placeholder="accountPlaceholderText"
+                    class="login-input"
+                    name="login_account_no_fill_v2"
+                    autocomplete="new-password"
+                    autocapitalize="none"
+                    autocorrect="off"
+                    spellcheck="false"
+                    @keyup.enter="handleLogin"
+                  />
                 </div>
                 <div class="input-wrap">
-                  <input type="password" :placeholder="t('password')" class="login-input" />
+                  <input
+                    type="password"
+                    v-model="password"
+                    :placeholder="t('password')"
+                    class="login-input"
+                    name="login_password_no_fill_v2"
+                    autocomplete="new-password"
+                    autocapitalize="none"
+                    autocorrect="off"
+                    spellcheck="false"
+                    @keyup.enter="handleLogin"
+                  />
                 </div>
               </div>
 
-              <button @click="$router.push('/workbench')" class="login-primary-button">
+              <button @click="handleLogin" class="login-primary-button" :disabled="loggingIn">
                 <span>{{ t('login_now') }}</span>
                 <ArrowRight class="login-primary-icon" />
               </button>
@@ -110,15 +132,39 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import { Globe, ChevronDown, ArrowRight } from "lucide-vue-next";
 import { useLanguage } from "../i18n";
+import {
+  getCurrentUserProfile,
+  loginByPassword,
+  setLoginToken,
+  setLoginUserProfile,
+} from "../api/services";
 
 const { currentLang, setLanguage, getLanguageLabel, t } = useLanguage();
+const router = useRouter();
 
 const isArtist = true;
 const isLangMenuOpen = ref(false);
 const langMenuContainerRef = ref(null);
 const currentLangLabel = computed(() => getLanguageLabel(currentLang.value));
+const username = ref("");
+const password = ref("");
+const loggingIn = ref(false);
+
+const accountPlaceholderText = computed(() =>
+  currentLang.value === "en" ? "Username / phone / email" : "用户名 / 手机号 / 邮箱"
+);
+const usernameRequiredText = computed(() =>
+  currentLang.value === "en" ? "Please enter username/phone/email" : "请输入用户名/手机号/邮箱"
+);
+const passwordRequiredText = computed(() =>
+  currentLang.value === "en" ? "Please enter password" : "请输入密码"
+);
+const loginSuccessText = computed(() =>
+  currentLang.value === "en" ? "Login successful" : "登录成功"
+);
 
 function toggleLangMenu() {
   isLangMenuOpen.value = !isLangMenuOpen.value;
@@ -127,6 +173,124 @@ function toggleLangMenu() {
 function selectLang(langCode) {
   setLanguage(langCode);
   isLangMenuOpen.value = false;
+}
+
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.textContent = message;
+  Object.assign(toast.style, {
+    position: "fixed",
+    top: "16px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#18181b",
+    color: "#fff",
+    padding: "10px 16px",
+    borderRadius: "999px",
+    zIndex: "9999",
+    pointerEvents: "none",
+    whiteSpace: "nowrap",
+  });
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 2000);
+}
+
+function extractMessage(payload) {
+  return (
+    payload?.message ||
+    payload?.msg ||
+    payload?.data?.message ||
+    payload?.data?.msg ||
+    payload?.response?.data?.message ||
+    payload?.response?.data?.msg ||
+    payload?.response?.data?.data?.message ||
+    payload?.response?.data?.data?.msg ||
+    payload?.error?.message ||
+    ""
+  );
+}
+
+function extractToken(payload) {
+  const accessToken = payload?.access_token ?? payload?.data?.access_token;
+  if (typeof accessToken === "string") return accessToken.trim();
+  if (accessToken && typeof accessToken === "object") {
+    return String(accessToken.token || accessToken.access_token || "").trim();
+  }
+  return String(payload?.token || payload?.data?.token || "").trim();
+}
+
+function extractUserProfile(payload) {
+  const raw = payload?.data || payload || {};
+  if (!raw || typeof raw !== "object") return null;
+
+  const displayName =
+    raw.username ||
+    raw.user_name ||
+    raw.nickname ||
+    raw.name ||
+    raw.account ||
+    raw.email ||
+    raw.mobile ||
+    raw.phone ||
+    "";
+
+  return {
+    ...raw,
+    display_name: displayName ? String(displayName).trim() : "",
+  };
+}
+
+async function handleLogin() {
+  if (loggingIn.value) return;
+
+  const account = username.value.trim();
+  const pwd = password.value;
+
+  if (!account) {
+    showToast(usernameRequiredText.value);
+    return;
+  }
+  if (!pwd) {
+    showToast(passwordRequiredText.value);
+    return;
+  }
+
+  loggingIn.value = true;
+  try {
+    const result = await loginByPassword({
+      login_type: "password",
+      username: account,
+      password: pwd,
+    });
+    const token = extractToken(result);
+    const message = extractMessage(result);
+
+    if (!token) {
+      showToast(String(message || t("network_error")));
+      return;
+    }
+
+    setLoginToken(token);
+    try {
+      const profileResult = await getCurrentUserProfile();
+      const profile = extractUserProfile(profileResult);
+      if (profile) {
+        setLoginUserProfile(profile);
+      }
+    } catch (profileError) {
+      // 用户信息拉取失败不阻断登录主流程
+    }
+    showToast(String(message || loginSuccessText.value));
+    router.push("/");
+  } catch (error) {
+    const message = extractMessage(error) || t("network_error");
+    showToast(String(message));
+  } finally {
+    loggingIn.value = false;
+  }
 }
 
 let outsideClickHandler = null;
@@ -418,6 +582,11 @@ onUnmounted(() => {
 
   &:active {
     transform: scale(0.95);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 }
 

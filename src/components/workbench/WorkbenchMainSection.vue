@@ -35,8 +35,19 @@
                             </div>
                         </div>
 
-                        <!-- 登录按钮 -->
-                        <button @click="router.push('/')" class="bg-[#171717] text-white px-5 py-2 rounded-full font-bold hover:bg-black transition-colors shadow-sm active:scale-95 flex items-center gap-2">
+                        <!-- 登录状态/按钮 -->
+                        <button
+                            v-if="isLoggedIn"
+                            class="bg-zinc-100 text-zinc-700 px-5 py-2 rounded-full font-bold shadow-sm flex items-center gap-2 cursor-default"
+                        >
+                            <i data-lucide="badge-check" class="w-4 h-4"></i>
+                            <span>{{ loginDisplayName }}</span>
+                        </button>
+                        <button
+                            v-else
+                            @click="goLogin()"
+                            class="bg-[#171717] text-white px-5 py-2 rounded-full font-bold hover:bg-black transition-colors shadow-sm active:scale-95 flex items-center gap-2"
+                        >
                             <i data-lucide="user" class="w-4 h-4"></i> <span data-i18n="login_register">登录 / 注册</span>
                         </button>
                     </div>
@@ -919,7 +930,10 @@ const props = defineProps([
   'updateCustomDurationFromTime',
   'updateDurationFromSlider',
   'updateDurationFromTime',
-  'galleryItems'
+  'galleryItems',
+  'isLoggedIn',
+  'goLogin',
+  'loginDisplayName'
 ])
 const {
   handleCreateDragLeave,
@@ -957,7 +971,10 @@ const {
   updateCustomDuration,
   updateCustomDurationFromTime,
   updateDurationFromSlider,
-  updateDurationFromTime
+  updateDurationFromTime,
+  isLoggedIn,
+  goLogin,
+  loginDisplayName
 } = props
 
 const getGalleryGridClass = (item = {}) => {

@@ -32,31 +32,64 @@
           <h2 class="auth-title">{{ t('forgot_title') }}</h2>
           <p class="auth-copy">{{ t('forgot_subtitle') }}</p>
 
-          <div v-if="step === 1" class="form-col">
-            <input type="email" :placeholder="t('phone_number')" class="auth-input" />
+          <div class="form-col">
+            <input
+              type="email"
+              v-model="phone"
+              :placeholder="t('phone_number')"
+              class="auth-input"
+              name="forgot_account_no_fill"
+              autocomplete="off"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+            />
             <div class="code-row">
-              <input type="text" :placeholder="t('verification_code')" class="auth-input" />
+              <input
+                type="text"
+                v-model="verificationCode"
+                :placeholder="t('verification_code')"
+                class="auth-input"
+                name="forgot_code"
+                autocomplete="off"
+                autocapitalize="none"
+                autocorrect="off"
+                spellcheck="false"
+              />
               <button @click="startCountdown" class="code-btn" :disabled="countdown > 0">
                 {{ verifyButtonText }}
               </button>
             </div>
-            <button @click="step = 2" class="primary-btn">
-              <span>{{ t('next_step') }}</span>
-              <ArrowRight class="icon-16" />
-            </button>
-          </div>
-
-          <div v-else class="form-col">
-            <input type="password" :placeholder="t('new_password')" class="auth-input" />
-            <input type="password" :placeholder="t('confirm_password')" class="auth-input" />
-            <button @click="$router.push('/')" class="primary-btn">
+            <input
+              type="password"
+              v-model="newPassword"
+              :placeholder="newPasswordPlaceholderText"
+              class="auth-input"
+              name="forgot_password_no_fill"
+              autocomplete="new-password"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+            />
+            <input
+              type="password"
+              v-model="confirmPassword"
+              :placeholder="confirmPasswordPlaceholderText"
+              class="auth-input"
+              name="forgot_confirm_password_no_fill"
+              autocomplete="new-password"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+            />
+            <button @click="handleReset" class="primary-btn">
               <span>{{ t('reset_now') }}</span>
               <Check class="icon-16" />
             </button>
           </div>
 
           <div class="auth-footline">
-            <span @click="$router.push('/')" class="jump-link">{{ t('back_login') }}</span>
+            <span @click="$router.push('/login')" class="jump-link">{{ t('back_login') }}</span>
           </div>
         </div>
       </div>
@@ -77,17 +110,23 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { Globe, ChevronDown, ArrowRight, Check } from "lucide-vue-next";
+import { useRouter } from "vue-router";
+import { Globe, ChevronDown, Check } from "lucide-vue-next";
 import { useLanguage } from "../i18n";
+import { sendSms } from "../api/services";
 
 const { currentLang, setLanguage, getLanguageLabel, t } = useLanguage();
+const router = useRouter();
 
-const step = ref(1);
 const isArtist = true;
 const isLangMenuOpen = ref(false);
 const langMenuContainerRef = ref(null);
 const currentLangLabel = computed(() => getLanguageLabel(currentLang.value));
 
+const phone = ref("");
+const verificationCode = ref("");
+const newPassword = ref("");
+const confirmPassword = ref("");
 const countdown = ref(0);
 const hasSentCode = ref(false);
 let timer = null;
@@ -97,6 +136,39 @@ const verifyButtonText = computed(() => {
   if (countdown.value > 0) return `${countdown.value}s`;
   return hasSentCode.value ? t("resend_code") : t("get_code");
 });
+const emailRequiredText = computed(() =>
+  currentLang.value === "en" ? "Please enter your email address" : "请输入邮箱地址"
+);
+const invalidEmailText = computed(() =>
+  currentLang.value === "en" ? "Please enter a valid email address" : "邮箱格式不正确"
+);
+const codeRequiredText = computed(() =>
+  currentLang.value === "en" ? "Please enter verification code" : "\u8bf7\u8f93\u5165\u9a8c\u8bc1\u7801"
+);
+const passwordRequiredText = computed(() =>
+  currentLang.value === "en" ? "Please enter password" : "\u8bf7\u8f93\u5165\u5bc6\u7801"
+);
+const passwordMismatchText = computed(() =>
+  currentLang.value === "en" ? "Passwords do not match" : "\u4e24\u6b21\u5bc6\u7801\u8f93\u5165\u4e0d\u4e00\u81f4"
+);
+const passwordRuleText = computed(() =>
+  currentLang.value === "en"
+    ? "Password must be at least 8 characters and include letters and numbers"
+    : "\u5bc6\u7801\u81f3\u5c118\u4f4d\uff0c\u9700\u5305\u542b\u5b57\u6bcd\u548c\u6570\u5b57"
+);
+const newPasswordPlaceholderText = computed(() =>
+  currentLang.value === "en"
+    ? "New Password (8+ chars, letters and numbers)"
+    : "\u65b0\u5bc6\u7801\uff08\u81f3\u5c118\u4f4d\uff0c\u5305\u542b\u5b57\u6bcd\u548c\u6570\u5b57\uff09"
+);
+const confirmPasswordPlaceholderText = computed(() =>
+  currentLang.value === "en"
+    ? "Confirm Password (same rules)"
+    : "\u786e\u8ba4\u5bc6\u7801\uff08\u540c\u4e0a\u89c4\u5219\uff09"
+);
+const resetSuccessText = computed(() =>
+  currentLang.value === "en" ? "Password reset successful" : "\u5bc6\u7801\u91cd\u7f6e\u6210\u529f"
+);
 
 function toggleLangMenu() {
   isLangMenuOpen.value = !isLangMenuOpen.value;
@@ -109,8 +181,20 @@ function selectLang(langCode) {
 
 function showToast(message) {
   const toast = document.createElement("div");
-  toast.className = "auth-toast";
   toast.textContent = message;
+  Object.assign(toast.style, {
+    position: "fixed",
+    top: "16px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#18181b",
+    color: "#fff",
+    padding: "10px 16px",
+    borderRadius: "999px",
+    zIndex: "9999",
+    pointerEvents: "none",
+    whiteSpace: "nowrap",
+  });
   document.body.appendChild(toast);
 
   setTimeout(() => {
@@ -118,24 +202,79 @@ function showToast(message) {
   }, 2000);
 }
 
-function startCountdown() {
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPassword(value) {
+  return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(value);
+}
+
+async function startCountdown() {
   if (countdown.value > 0) return;
+  const email = phone.value.trim();
+  if (!email) {
+    showToast(emailRequiredText.value);
+    return;
+  }
+  if (!isValidEmail(email)) {
+    showToast(invalidEmailText.value);
+    return;
+  }
 
-  hasSentCode.value = true;
-  showToast(t("code_sent"));
-
-  countdown.value = 60;
-  if (timer) clearInterval(timer);
-
-  timer = setInterval(() => {
-    countdown.value -= 1;
-
-    if (countdown.value <= 0) {
-      countdown.value = 0;
-      clearInterval(timer);
-      timer = null;
+  try {
+    const result = await sendSms(email);
+    if (!result) {
+      showToast(t("code_send_failed"));
+      return;
     }
-  }, 1000);
+
+    hasSentCode.value = true;
+    showToast(t("code_sent"));
+
+    countdown.value = 60;
+    if (timer) clearInterval(timer);
+
+    timer = setInterval(() => {
+      countdown.value -= 1;
+
+      if (countdown.value <= 0) {
+        countdown.value = 0;
+        clearInterval(timer);
+        timer = null;
+      }
+    }, 1000);
+  } catch (error) {
+    showToast(t("network_error"));
+  }
+}
+
+function handleReset() {
+  const code = verificationCode.value.trim();
+  const pwd = newPassword.value;
+  const confirmPwd = confirmPassword.value;
+
+  if (!code) {
+    showToast(codeRequiredText.value);
+    return;
+  }
+  if (!pwd || !confirmPwd) {
+    showToast(passwordRequiredText.value);
+    return;
+  }
+  if (!isValidPassword(pwd) || !isValidPassword(confirmPwd)) {
+    showToast(passwordRuleText.value);
+    return;
+  }
+  if (pwd !== confirmPwd) {
+    showToast(passwordMismatchText.value);
+    return;
+  }
+
+  showToast(resetSuccessText.value);
+  setTimeout(() => {
+    router.push("/login");
+  }, 800);
 }
 
 onMounted(() => {

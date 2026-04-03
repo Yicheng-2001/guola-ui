@@ -32,24 +32,57 @@
           <h2 class="auth-title">{{ t('register_title') }}</h2>
           <p class="auth-copy">{{ t('register_subtitle') }}</p>
 
-          <div v-if="step === 1" class="form-col">
-            <input type="tel" v-model="phone" :placeholder="t('phone_number')" class="auth-input" />
+          <div class="form-col">
+            <input
+              type="email"
+              v-model="phone"
+              :placeholder="t('phone_number')"
+              class="auth-input"
+              name="register_account_no_fill"
+              autocomplete="off"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+            />
             <div class="code-row">
-              <input type="text" :placeholder="t('verification_code')" class="auth-input" />
+              <input
+                type="text"
+                v-model="verificationCode"
+                :placeholder="t('verification_code')"
+                class="auth-input"
+                name="register_code"
+                autocomplete="off"
+                autocapitalize="none"
+                autocorrect="off"
+                spellcheck="false"
+              />
               <button @click="startCountdown" class="code-btn" :disabled="countdown > 0">
                 {{ verifyButtonText }}
               </button>
             </div>
-            <button @click="step = 2" class="primary-btn">
-              <span>{{ t('next_step') }}</span>
-              <ArrowRight class="icon-16" />
-            </button>
-          </div>
-
-          <div v-else class="form-col">
-            <input type="password" :placeholder="t('password')" class="auth-input" />
-            <input type="password" :placeholder="t('confirm_password')" class="auth-input" />
-            <button @click="$router.push('/workbench')" class="primary-btn">
+            <input
+              type="password"
+              v-model="password"
+              :placeholder="passwordPlaceholderText"
+              class="auth-input"
+              name="register_password_no_fill"
+              autocomplete="new-password"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+            />
+            <input
+              type="password"
+              v-model="confirmPassword"
+              :placeholder="confirmPasswordPlaceholderText"
+              class="auth-input"
+              name="register_confirm_password_no_fill"
+              autocomplete="new-password"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+            />
+            <button @click="handleRegister" class="primary-btn" :disabled="registering">
               <span>{{ t('register_now') }}</span>
               <Check class="icon-16" />
             </button>
@@ -57,7 +90,7 @@
 
           <div class="auth-footline">
             <span>{{ t('have_account') }}</span>
-            <span @click="$router.push('/')" class="jump-link">{{ t('go_login') }}</span>
+            <span @click="$router.push('/login')" class="jump-link">{{ t('go_login') }}</span>
           </div>
         </div>
       </div>
@@ -78,19 +111,24 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { Globe, ChevronDown, ArrowRight, Check } from "lucide-vue-next";
+import { useRouter } from "vue-router";
+import { Globe, ChevronDown, Check } from "lucide-vue-next";
 import { useLanguage } from "../i18n";
-import { sendSms } from "../api/services";
+import { registerByEmail, sendSms } from "../api/services";
 
 const { currentLang, setLanguage, getLanguageLabel, t } = useLanguage();
+const router = useRouter();
 
-const step = ref(1);
 const isArtist = true;
 const isLangMenuOpen = ref(false);
 const langMenuContainerRef = ref(null);
 const currentLangLabel = computed(() => getLanguageLabel(currentLang.value));
 
 const phone = ref("");
+const verificationCode = ref("");
+const password = ref("");
+const confirmPassword = ref("");
+const registering = ref(false);
 const countdown = ref(0);
 const hasSentCode = ref(false);
 let timer = null;
@@ -100,6 +138,39 @@ const verifyButtonText = computed(() => {
   if (countdown.value > 0) return `${countdown.value}s`;
   return hasSentCode.value ? t("resend_code") : t("get_code");
 });
+const emailRequiredText = computed(() =>
+  currentLang.value === "en" ? "Please enter your email address" : "\u8bf7\u8f93\u5165\u90ae\u7bb1\u5730\u5740"
+);
+const invalidEmailText = computed(() =>
+  currentLang.value === "en" ? "Please enter a valid email address" : "\u90ae\u7bb1\u683c\u5f0f\u4e0d\u6b63\u786e"
+);
+const codeRequiredText = computed(() =>
+  currentLang.value === "en" ? "Please enter verification code" : "\u8bf7\u8f93\u5165\u9a8c\u8bc1\u7801"
+);
+const passwordRequiredText = computed(() =>
+  currentLang.value === "en" ? "Please enter password" : "\u8bf7\u8f93\u5165\u5bc6\u7801"
+);
+const passwordMismatchText = computed(() =>
+  currentLang.value === "en" ? "Passwords do not match" : "\u4e24\u6b21\u5bc6\u7801\u8f93\u5165\u4e0d\u4e00\u81f4"
+);
+const registerSuccessText = computed(() =>
+  currentLang.value === "en" ? "Registration successful" : "\u6ce8\u518c\u6210\u529f"
+);
+const passwordRuleText = computed(() =>
+  currentLang.value === "en"
+    ? "Password must be at least 8 characters and include letters and numbers"
+    : "\u5bc6\u7801\u81f3\u5c118\u4f4d\uff0c\u9700\u5305\u542b\u5b57\u6bcd\u548c\u6570\u5b57"
+);
+const passwordPlaceholderText = computed(() =>
+  currentLang.value === "en"
+    ? "Password (8+ chars, letters and numbers)"
+    : "\u5bc6\u7801\uff08\u81f3\u5c118\u4f4d\uff0c\u5305\u542b\u5b57\u6bcd\u548c\u6570\u5b57\uff09"
+);
+const confirmPasswordPlaceholderText = computed(() =>
+  currentLang.value === "en"
+    ? "Confirm Password (same rules)"
+    : "\u786e\u8ba4\u5bc6\u7801\uff08\u540c\u4e0a\u89c4\u5219\uff09"
+);
 
 function toggleLangMenu() {
   isLangMenuOpen.value = !isLangMenuOpen.value;
@@ -112,8 +183,20 @@ function selectLang(langCode) {
 
 function showToast(message) {
   const toast = document.createElement("div");
-  toast.className = "auth-toast";
   toast.textContent = message;
+  Object.assign(toast.style, {
+    position: "fixed",
+    top: "16px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#18181b",
+    color: "#fff",
+    padding: "10px 16px",
+    borderRadius: "999px",
+    zIndex: "9999",
+    pointerEvents: "none",
+    whiteSpace: "nowrap",
+  });
   document.body.appendChild(toast);
 
   setTimeout(() => {
@@ -121,11 +204,28 @@ function showToast(message) {
   }, 2000);
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPassword(value) {
+  return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(value);
+}
+
 async function startCountdown() {
   if (countdown.value > 0) return;
+  const email = phone.value.trim();
+  if (!email) {
+    showToast(emailRequiredText.value);
+    return;
+  }
+  if (!isValidEmail(email)) {
+    showToast(invalidEmailText.value);
+    return;
+  }
 
   try {
-    const result = await sendSms(phone.value);
+    const result = await sendSms(email);
     if (result) {
       hasSentCode.value = true;
       showToast(t("code_sent"));
@@ -147,6 +247,64 @@ async function startCountdown() {
     }
   } catch (error) {
     showToast(t("network_error"));
+  }
+}
+
+async function handleRegister() {
+  if (registering.value) return;
+
+  const email = phone.value.trim();
+  const code = verificationCode.value.trim();
+  const pwd = password.value;
+  const confirmPwd = confirmPassword.value;
+
+  if (!email) {
+    showToast(emailRequiredText.value);
+    return;
+  }
+  if (!isValidEmail(email)) {
+    showToast(invalidEmailText.value);
+    return;
+  }
+  if (!code) {
+    showToast(codeRequiredText.value);
+    return;
+  }
+  if (!pwd || !confirmPwd) {
+    showToast(passwordRequiredText.value);
+    return;
+  }
+  if (!isValidPassword(pwd) || !isValidPassword(confirmPwd)) {
+    showToast(passwordRuleText.value);
+    return;
+  }
+  if (pwd !== confirmPwd) {
+    showToast(passwordMismatchText.value);
+    return;
+  }
+
+  registering.value = true;
+  try {
+    const result = await registerByEmail({
+      email,
+      code,
+      password: pwd,
+      confirm_password: confirmPwd,
+    });
+    const message = result?.message || result?.msg || registerSuccessText.value;
+    showToast(String(message));
+    setTimeout(() => {
+      router.push("/login");
+    }, 800);
+  } catch (error) {
+    const message =
+      error?.response?.data?.message ||
+      error?.response?.data?.msg ||
+      error?.message ||
+      t("network_error");
+    showToast(String(message));
+  } finally {
+    registering.value = false;
   }
 }
 

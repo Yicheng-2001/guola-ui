@@ -1,4 +1,4 @@
-<template>
+﻿<template>
 <aside class="w-full md:w-[72px] h-[72px] md:h-full flex flex-row md:flex-col items-center justify-between md:justify-start py-0 md:py-6 px-4 md:px-0 bg-white border-t md:border-t-0 md:border-r border-zinc-200 z-30 shadow-[0_-4px_24px_rgba(0,0,0,0.02)] md:shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0 order-last md:order-none">
         <!-- Logo 区域 (像素马) -->
         <div @click="switchGlobalTab('home')" class="w-10 h-10 md:w-12 md:h-12 relative flex items-center justify-center mb-0 md:mb-2 mr-2 md:mr-0 cursor-pointer transition-transform hover:scale-105 overflow-hidden">
@@ -57,7 +57,7 @@
                 </div>
             </div>
             
-            <div class="relative">
+            <div v-if="isLoggedIn" class="relative">
                 <button @click="toggleUserMenu()" class="w-10 h-10 rounded-full bg-zinc-100 border border-zinc-200 overflow-hidden cursor-pointer hover:shadow-md transition-all outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2">
                     <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Guola&backgroundColor=f4f4f5" alt="User Avatar" />
                 </button>
@@ -66,11 +66,11 @@
                 <div id="userDropdown" class="hidden absolute bottom-14 right-0 md:left-14 md:bottom-0 md:right-auto w-48 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-zinc-100 p-2 py-3 z-50 animate-in-slide-up">
                     <div class="px-3 pb-3 mb-2 border-b border-zinc-100 flex justify-between items-center">
                         <div>
-                            <p class="text-sm font-bold text-zinc-900" data-i18n="user_name">创作者_001</p>
+                            <p class="text-sm font-bold text-zinc-900">{{ userDisplayName }}</p>
                             <p class="text-xs text-zinc-500 mt-0.5" data-i18n="user_role">普通用户</p>
                         </div>
                         <div class="text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-md">
-                            1200 <span data-i18n="points">积分</span>
+                            {{ balanceDisplay }} <span data-i18n="points">积分</span>
                         </div>
                     </div>
                     <div class="flex flex-col gap-1">
@@ -88,15 +88,27 @@
                     </div>
                 </div>
             </div>
+            <button
+                v-else
+                @click="goLogin()"
+                class="w-10 h-10 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-700 hover:text-zinc-900 hover:shadow-md transition-all flex items-center justify-center"
+                title="登录"
+            >
+                <i data-lucide="log-in" class="w-5 h-5"></i>
+            </button>
         </div>
     </aside>
 </template>
 <script setup>
-const { confirmLogout, openModal, switchGlobalTab, toggleUserMenu, toggleWechatGroup } = defineProps([
+const { confirmLogout, openModal, switchGlobalTab, toggleUserMenu, toggleWechatGroup, isLoggedIn, goLogin, userDisplayName, balanceDisplay } = defineProps([
   'confirmLogout',
   'openModal',
   'switchGlobalTab',
   'toggleUserMenu',
-  'toggleWechatGroup'
+  'toggleWechatGroup',
+  'isLoggedIn',
+  'goLogin',
+  'userDisplayName',
+  'balanceDisplay'
 ])
 </script>

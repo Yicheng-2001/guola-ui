@@ -57,7 +57,7 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-3">
-                    <span class="text-3xl font-extrabold text-amber-500 font-mono">1,200</span>
+                    <span class="text-3xl font-extrabold text-amber-500 font-mono">{{ balanceDisplay }}</span>
                     <span class="points-modal-copy text-sm text-zinc-500 font-bold" data-i18n="available_points">当前可用积分</span>
                 </div>
                 
@@ -189,7 +189,7 @@
                     <h3 class="font-bold text-zinc-900">每日签到</h3>
                     <p class="text-xs text-zinc-500 mt-0.5">今日可领 +50 积分</p>
                 </div>
-                <button class="bg-zinc-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-zinc-800 transition-transform active:scale-95">立即签到</button>
+                <button @click="handleDailySignIn()" class="bg-zinc-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-zinc-800 transition-transform active:scale-95">立即签到</button>
             </div>
 
             <div class="bg-white rounded-2xl p-5 border border-zinc-200 flex flex-col text-left shadow-sm">
@@ -403,6 +403,7 @@
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const {
+  balanceDisplay,
   closeAssetDownloadModal,
   closeModal,
   closeVideoModal,
@@ -411,10 +412,12 @@ const {
   copyVideoShareLink,
   downloadAsset,
   generateSimilar,
+  handleDailySignIn,
   setHomeMode,
   switchLoginTab,
   switchPointsTab
 } = defineProps([
+  'balanceDisplay',
   'closeAssetDownloadModal',
   'closeModal',
   'closeVideoModal',
@@ -423,6 +426,7 @@ const {
   'copyVideoShareLink',
   'downloadAsset',
   'generateSimilar',
+  'handleDailySignIn',
   'setHomeMode',
   'switchLoginTab',
   'switchPointsTab'
