@@ -89,6 +89,16 @@ export function creditDailySignIn() {
   });
 }
 
+export function getNotifications() {
+  return request({
+    url: "/v1/notifications",
+    method: "get",
+    headers: {
+      noError: true,
+    },
+  });
+}
+
 export function getPublics(page, page_size) {
   return request({
     url: "/v1/publics",

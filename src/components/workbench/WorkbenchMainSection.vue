@@ -680,148 +680,140 @@
 
                 <!-- 消息筛选标签 -->
                 <div class="flex items-center gap-2 mb-8 overflow-x-auto no-scrollbar" id="message-filters">
-                    <button class="message-filter px-4 py-2 rounded-full text-xs font-bold transition-all bg-zinc-900 text-white shadow-sm whitespace-nowrap" @click="setMessageFilter($event.currentTarget, 'all')">
+                    <button :class="getMessageFilterClass('all')" @click="setMessageFilter($event.currentTarget, 'all')">
                         <i data-lucide="inbox" class="w-3.5 h-3.5 inline-block mr-1"></i>全部消息
                     </button>
-                    <button class="message-filter px-4 py-2 rounded-full text-xs font-bold transition-all bg-white text-zinc-500 border border-zinc-200 hover:text-zinc-900 hover:border-zinc-300 whitespace-nowrap" @click="setMessageFilter($event.currentTarget, 'system')">
+                    <button :class="getMessageFilterClass('system')" @click="setMessageFilter($event.currentTarget, 'system')">
                         <i data-lucide="bell" class="w-3.5 h-3.5 inline-block mr-1"></i>系统公告
                     </button>
-                    <button class="message-filter px-4 py-2 rounded-full text-xs font-bold transition-all bg-white text-zinc-500 border border-zinc-200 hover:text-zinc-900 hover:border-zinc-300 whitespace-nowrap" @click="setMessageFilter($event.currentTarget, 'activity')">
+                    <button :class="getMessageFilterClass('activity')" @click="setMessageFilter($event.currentTarget, 'activity')">
                         <i data-lucide="gift" class="w-3.5 h-3.5 inline-block mr-1"></i>活动福利
                     </button>
-                    <button class="message-filter px-4 py-2 rounded-full text-xs font-bold transition-all bg-white text-zinc-500 border border-zinc-200 hover:text-zinc-900 hover:border-zinc-300 whitespace-nowrap" @click="setMessageFilter($event.currentTarget, 'payment')">
+                    <button :class="getMessageFilterClass('payment')" @click="setMessageFilter($event.currentTarget, 'payment')">
                         <i data-lucide="credit-card" class="w-3.5 h-3.5 inline-block mr-1"></i>支付消息
                     </button>
                 </div>
 
                 <div class="relative border-l border-zinc-200 ml-4 pb-20">
-                    <div class="mb-12 relative pl-10" data-message-type="system">
-                        <div class="absolute -left-[21px] top-1 w-10 h-10 rounded-full bg-[#F7F7F8] flex items-center justify-center">
-                            <div class="w-3 h-3 rounded-full bg-zinc-900 border-2 border-white shadow-sm"></div>
-                        </div>
-                        <div class="flex flex-col items-start gap-2 mb-3">
-                            <div class="flex items-center gap-3">
-                                <span class="px-2.5 py-1 bg-white border border-zinc-200 rounded-full text-[10px] font-bold text-emerald-600" data-i18n="system_notice">系统公告</span>
+                    <div
+                        v-for="message in messageTimelineItems"
+                        :key="message.id"
+                        class="mb-12 relative pl-10"
+                        :data-message-type="message.messageType"
+                    >
+                        <template v-if="message.variant === 'notice'">
+                            <div class="absolute -left-[21px] top-1 w-10 h-10 rounded-full bg-[#F7F7F8] flex items-center justify-center">
+                                <div class="w-3 h-3 rounded-full bg-zinc-900 border-2 border-white shadow-sm"></div>
                             </div>
-                            <div class="flex items-center gap-1.5 text-xs font-medium text-zinc-400 font-mono">
-                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> 2026.03.11
-                            </div>
-                        </div>
-                        <div class="bg-white border border-zinc-200 rounded-[20px] p-6 shadow-sm">
-                            <h3 class="text-lg font-bold text-zinc-900 mb-3">全新积分系统上线通知</h3>
-                            <p class="text-sm text-zinc-500 leading-relaxed font-serif tracking-wide">平台现已将「算力」全面升级为「积分」体系。现在每日签到、邀请好友均可获得海量积分奖励，让您的创作更加自由无负担。</p>
-                        </div>
-                    </div>
-
-                    <div class="mb-12 relative pl-10" data-message-type="activity">
-                        <div class="absolute -left-[21px] top-1 w-10 h-10 rounded-full bg-[#F7F7F8] flex items-center justify-center">
-                            <div class="w-3 h-3 rounded-full bg-zinc-900 border-2 border-white shadow-sm"></div>
-                        </div>
-                        <div class="flex flex-col items-start gap-2 mb-3">
-                            <div class="flex items-center gap-3">
-                                <span class="px-2.5 py-1 bg-white border border-zinc-200 rounded-full text-[10px] font-bold text-orange-600">活动福利</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 text-xs font-medium text-zinc-400 font-mono">
-                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> 2026.03.01
-                            </div>
-                        </div>
-                        <div class="bg-white border border-zinc-200 rounded-[20px] p-6 shadow-sm">
-                            <h3 class="text-lg font-bold text-zinc-900 mb-3">春季创作挑战赛正式开启</h3>
-                            <p class="text-sm text-zinc-500 leading-relaxed font-serif tracking-wide">参与「春日视界」主题创作，带上专属标签发布视频至小红书或抖音，即有机会赢取 100,000 积分及周边大礼包！</p>
-                        </div>
-                    </div>
-
-                    <!-- 支付消息：充值成功 -->
-                    <div class="mb-12 relative pl-10" data-message-type="payment">
-                        <div class="absolute -left-[21px] top-1 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
-                            <div class="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white shadow-sm"></div>
-                        </div>
-                        <div class="flex flex-col items-start gap-2 mb-3">
-                            <div class="flex items-center gap-3">
-                                <span class="px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] font-bold text-emerald-600">支付成功</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 text-xs font-medium text-zinc-400 font-mono">
-                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> 2026.03.15 14:32
-                            </div>
-                        </div>
-                        <div class="bg-white border border-zinc-200 rounded-[20px] p-6 shadow-sm">
-                            <div class="flex items-start gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-                                    <i data-lucide="check-circle" class="w-6 h-6 text-emerald-600"></i>
+                            <div class="flex flex-col items-start gap-2 mb-3">
+                                <div class="flex items-center gap-3">
+                                    <span :class="message.badgeClass">{{ message.badgeText }}</span>
                                 </div>
-                                <div class="flex-1">
-                                    <h3 class="text-lg font-bold text-zinc-900 mb-2">积分充值成功</h3>
-                                    <p class="text-sm text-zinc-500 leading-relaxed font-serif tracking-wide mb-3">您已成功充值 1,500 积分，支付金额 ¥90.00。积分已到账，可立即用于视频生成。</p>
-                                    <div class="flex items-center gap-4 text-xs">
-                                        <span class="text-zinc-400">订单号：<span class="font-mono">PAY202603151432001</span></span>
-                                        <span class="text-emerald-600 font-bold">+1,500 积分</span>
+                                <div class="flex items-center gap-1.5 text-xs font-medium text-zinc-400 font-mono">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> {{ message.dateText }}
+                                </div>
+                            </div>
+                            <div class="bg-white border border-zinc-200 rounded-[20px] p-6 shadow-sm">
+                                <h3 class="text-lg font-bold text-zinc-900 mb-3">{{ message.title }}</h3>
+                                <p class="text-sm text-zinc-500 leading-relaxed font-serif tracking-wide">{{ message.content }}</p>
+                            </div>
+                        </template>
+
+                        <template v-else-if="message.variant === 'payment-topup'">
+                            <div class="absolute -left-[21px] top-1 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                                <div class="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white shadow-sm"></div>
+                            </div>
+                            <div class="flex flex-col items-start gap-2 mb-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] font-bold text-emerald-600">{{ message.badgeText }}</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 text-xs font-medium text-zinc-400 font-mono">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> {{ message.dateText }}
+                                </div>
+                            </div>
+                            <div class="bg-white border border-zinc-200 rounded-[20px] p-6 shadow-sm">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                                        <i data-lucide="check-circle" class="w-6 h-6 text-emerald-600"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-bold text-zinc-900 mb-2">{{ message.title }}</h3>
+                                        <p class="text-sm text-zinc-500 leading-relaxed font-serif tracking-wide mb-3">{{ message.content }}</p>
+                                        <div class="flex items-center gap-4 text-xs">
+                                            <span class="text-zinc-400">订单号：<span class="font-mono">{{ message.orderNo }}</span></span>
+                                            <span class="text-emerald-600 font-bold">{{ message.amountText }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </template>
 
-                    <!-- 支付消息：余额不足提醒 -->
-                    <div class="mb-12 relative pl-10" data-message-type="payment">
-                        <div class="absolute -left-[21px] top-1 w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
-                            <div class="w-3 h-3 rounded-full bg-amber-500 border-2 border-white shadow-sm"></div>
-                        </div>
-                        <div class="flex flex-col items-start gap-2 mb-3">
-                            <div class="flex items-center gap-3">
-                                <span class="px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-bold text-amber-600">余额提醒</span>
+                        <template v-else-if="message.variant === 'payment-balance-warning'">
+                            <div class="absolute -left-[21px] top-1 w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
+                                <div class="w-3 h-3 rounded-full bg-amber-500 border-2 border-white shadow-sm"></div>
                             </div>
-                            <div class="flex items-center gap-1.5 text-xs font-medium text-zinc-400 font-mono">
-                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> 2026.03.14 09:15
-                            </div>
-                        </div>
-                        <div class="bg-white border border-zinc-200 rounded-[20px] p-6 shadow-sm">
-                            <div class="flex items-start gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                                    <i data-lucide="alert-circle" class="w-6 h-6 text-amber-600"></i>
+                            <div class="flex flex-col items-start gap-2 mb-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-bold text-amber-600">余额提醒</span>
                                 </div>
-                                <div class="flex-1">
-                                    <h3 class="text-lg font-bold text-zinc-900 mb-2">积分余额不足提醒</h3>
-                                    <p class="text-sm text-zinc-500 leading-relaxed font-serif tracking-wide mb-3">您的积分余额仅剩 <span class="text-amber-600 font-bold">45 积分</span>，不足以支持一次视频生成（最低需 50 积分）。建议您及时充值以保证创作不受影响。</p>
-                                    <div class="flex items-center gap-3">
-                                        <button @click="router.push('/buy-points')" class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold rounded-lg transition-colors">
-                                            立即充值
-                                        </button>
-                                        <button class="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 text-xs font-bold rounded-lg transition-colors">
-                                            查看明细
-                                        </button>
+                                <div class="flex items-center gap-1.5 text-xs font-medium text-zinc-400 font-mono">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> {{ message.dateText }}
+                                </div>
+                            </div>
+                            <div class="bg-white border border-zinc-200 rounded-[20px] p-6 shadow-sm">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                                        <i data-lucide="alert-circle" class="w-6 h-6 text-amber-600"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-bold text-zinc-900 mb-2">积分余额不足提醒</h3>
+                                        <p class="text-sm text-zinc-500 leading-relaxed font-serif tracking-wide mb-3">您的积分余额仅剩 <span class="text-amber-600 font-bold">45 积分</span>，不足以支持一次视频生成（最低需 50 积分）。建议您及时充值以保证创作不受影响。</p>
+                                        <div class="flex items-center gap-3">
+                                            <button @click="router.push('/buy-points')" class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold rounded-lg transition-colors">
+                                                立即充值
+                                            </button>
+                                            <button class="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 text-xs font-bold rounded-lg transition-colors">
+                                                查看明细
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </template>
 
-                    <!-- 支付消息：订阅续费成功 -->
-                    <div class="mb-12 relative pl-10" data-message-type="payment">
-                        <div class="absolute -left-[21px] top-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                            <div class="w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-sm"></div>
-                        </div>
-                        <div class="flex flex-col items-start gap-2 mb-3">
-                            <div class="flex items-center gap-3">
-                                <span class="px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600">订阅通知</span>
+                        <template v-else-if="message.variant === 'payment-subscription'">
+                            <div class="absolute -left-[21px] top-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                                <div class="w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-sm"></div>
                             </div>
-                            <div class="flex items-center gap-1.5 text-xs font-medium text-zinc-400 font-mono">
-                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> 2026.03.10 00:00
-                            </div>
-                        </div>
-                        <div class="bg-white border border-zinc-200 rounded-[20px] p-6 shadow-sm">
-                            <div class="flex items-start gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-                                    <i data-lucide="crown" class="w-6 h-6 text-blue-600"></i>
+                            <div class="flex flex-col items-start gap-2 mb-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600">订阅通知</span>
                                 </div>
-                                <div class="flex-1">
-                                    <h3 class="text-lg font-bold text-zinc-900 mb-2">会员订阅续费成功</h3>
-                                    <p class="text-sm text-zinc-500 leading-relaxed font-serif tracking-wide mb-3">您的「标准会员」订阅已自动续费成功，支付金额 ¥30.00/月。会员权益已延期至 2026.04.10。</p>
-                                    <div class="flex items-center gap-4 text-xs">
-                                        <span class="text-zinc-400">订单号：<span class="font-mono">SUB202603100000001</span></span>
-                                        <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold">已续费</span>
+                                <div class="flex items-center gap-1.5 text-xs font-medium text-zinc-400 font-mono">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> {{ message.dateText }}
+                                </div>
+                            </div>
+                            <div class="bg-white border border-zinc-200 rounded-[20px] p-6 shadow-sm">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                                        <i data-lucide="crown" class="w-6 h-6 text-blue-600"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-bold text-zinc-900 mb-2">会员订阅续费成功</h3>
+                                        <p class="text-sm text-zinc-500 leading-relaxed font-serif tracking-wide mb-3">您的「标准会员」订阅已自动续费成功，支付金额 ¥30.00/月。会员权益已延期至 2026.04.10。</p>
+                                        <div class="flex items-center gap-4 text-xs">
+                                            <span class="text-zinc-400">订单号：<span class="font-mono">{{ message.orderNo }}</span></span>
+                                            <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold">已续费</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        </template>
+                    </div>
+
+                    <div v-if="!messageTimelineItems.length" class="pl-10">
+                        <div class="bg-white border border-zinc-200 rounded-[20px] p-6 shadow-sm">
+                            <p class="text-sm text-zinc-500 leading-relaxed font-serif tracking-wide">暂无消息通知</p>
                         </div>
                     </div>
                 </div>
@@ -925,6 +917,8 @@ const props = defineProps([
   'updateDurationFromSlider',
   'updateDurationFromTime',
   'galleryItems',
+  'messageFilterType',
+  'messageTimelineItems',
   'isLoggedIn',
   'goLogin'
 ])
@@ -968,6 +962,21 @@ const {
   goLogin
 } = props
 const isLoggedIn = computed(() => Boolean(props.isLoggedIn))
+const messageFilterType = computed(() => {
+  const value = String(props.messageFilterType || '').trim().toLowerCase()
+  if (value === 'system' || value === 'activity' || value === 'payment') return value
+  return 'all'
+})
+const messageTimelineItems = computed(() =>
+  Array.isArray(props.messageTimelineItems) ? props.messageTimelineItems : []
+)
+
+function getMessageFilterClass(type) {
+  if (messageFilterType.value === type) {
+    return 'message-filter px-4 py-2 rounded-full text-xs font-bold transition-all bg-zinc-900 text-white shadow-sm whitespace-nowrap'
+  }
+  return 'message-filter px-4 py-2 rounded-full text-xs font-bold transition-all bg-white text-zinc-500 border border-zinc-200 hover:text-zinc-900 hover:border-zinc-300 whitespace-nowrap'
+}
 
 const getGalleryGridClass = (item = {}) => {
   const ratio = String(item.ratioClass || item.aspectRatio || item.ratio || '')

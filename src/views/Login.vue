@@ -88,7 +88,7 @@
 
               <div class="login-microcopy-row">
                 <div @click="$router.push('/register')" class="microcopy-link">{{ t('go_register') }}</div>
-                <div @click="$router.push('/forgot-password')" class="microcopy-link">{{ t('go_forgot') }}</div>
+                <div v-show="false" @click="$router.push('/forgot-password')" class="microcopy-link">{{ t('go_forgot') }}</div>
               </div>
             </div>
           </div>

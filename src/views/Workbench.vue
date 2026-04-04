@@ -13,6 +13,8 @@
       :is-logged-in="isLoggedIn"
       :go-login="goLogin"
       :login-display-name="loginDisplayName"
+      :message-filter-type="messageFilterType"
+      :message-timeline-items="messageTimelineItems"
     />
     <WorkbenchModals
       v-bind="modalProps"
@@ -24,7 +26,7 @@
   </div>
 </template>
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import WorkbenchSidebar from '../components/workbench/WorkbenchSidebar.vue'
 import WorkbenchMainSection from '../components/workbench/WorkbenchMainSection.vue'
@@ -38,6 +40,7 @@ import {
   getCurrentUserProfile,
   getLoginToken,
   getLoginUserProfile,
+  getNotifications,
   getPublics,
   setLoginUserProfile
 } from '../api/services'
@@ -50,6 +53,8 @@ const balance = ref(0)
 const signingIn = ref(false)
 const creditTransactions = ref([])
 const transactionsLoading = ref(false)
+const messageFilterType = ref('all')
+const notificationMessages = ref([])
 const balanceDisplay = computed(() => formatBalanceDisplay(balance.value))
 
 function formatBalanceDisplay(value) {
@@ -104,6 +109,151 @@ function extractBalance(payload = {}) {
 
 function pad2(value) {
   return String(value).padStart(2, '0')
+}
+
+function normalizeMessageFilterType(type) {
+  const value = String(type || '').trim().toLowerCase()
+  if (value === 'system' || value === 'activity' || value === 'payment') return value
+  return 'all'
+}
+
+function parseMessageTimestamp(value) {
+  if (value === null || value === undefined || value === '') return 0
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value > 1e11) return value
+    if (value > 1e9) return value * 1000
+    return 0
+  }
+  const text = String(value).trim()
+  if (!text) return 0
+  const parsedByDate = Date.parse(text)
+  if (Number.isFinite(parsedByDate)) return parsedByDate
+  const parsedNumber = Number(text)
+  if (!Number.isFinite(parsedNumber)) return 0
+  if (parsedNumber > 1e11) return parsedNumber
+  if (parsedNumber > 1e9) return parsedNumber * 1000
+  return 0
+}
+
+function formatMessageTime(value, includeTime = true) {
+  const timestamp = parseMessageTimestamp(value)
+  if (!timestamp) return '-'
+  const beijingDate = new Date(timestamp + 8 * 60 * 60 * 1000)
+  const dateText = `${beijingDate.getUTCFullYear()}.${pad2(beijingDate.getUTCMonth() + 1)}.${pad2(beijingDate.getUTCDate())}`
+  if (!includeTime) return dateText
+  return `${dateText} ${pad2(beijingDate.getUTCHours())}:${pad2(beijingDate.getUTCMinutes())}`
+}
+
+function extractNotificationItems(payload = {}) {
+  const candidates = [
+    payload?.data?.items,
+    payload?.items,
+    payload?.data?.data?.items,
+    payload?.data?.list,
+    payload?.list
+  ]
+  for (const items of candidates) {
+    if (Array.isArray(items)) return items
+  }
+  return []
+}
+
+function normalizeNotificationItem(item = {}, index = 0) {
+  const category = String(item.category || '').trim().toLowerCase()
+  if (category !== 'system' && category !== 'activity') return null
+
+  const timestamp =
+    parseMessageTimestamp(item.published_at) ||
+    parseMessageTimestamp(item.publishedAt) ||
+    parseMessageTimestamp(item.created_at) ||
+    parseMessageTimestamp(item.createdAt) ||
+    parseMessageTimestamp(item.updated_at) ||
+    parseMessageTimestamp(item.updatedAt) ||
+    parseMessageTimestamp(item.publish_at) ||
+    parseMessageTimestamp(item.publishAt) ||
+    parseMessageTimestamp(item.time) ||
+    parseMessageTimestamp(item.timestamp)
+
+  const title = String(
+    item.title ||
+      item.subject ||
+      item.name ||
+      (category === 'system' ? '系统公告' : '活动福利')
+  ).trim()
+  const content = String(
+    item.summary ||
+      item.content ||
+      item.message ||
+      item.remark ||
+      item.description ||
+      '暂无内容'
+  ).trim()
+
+  return {
+    id: item.id || `notification-${category}-${index}`,
+    messageType: category,
+    variant: 'notice',
+    sortTs: timestamp,
+    dateText: formatMessageTime(timestamp, true),
+    badgeText: category === 'system' ? '系统公告' : '活动福利',
+    badgeClass:
+      category === 'system'
+        ? 'px-2.5 py-1 bg-white border border-zinc-200 rounded-full text-[10px] font-bold text-emerald-600'
+        : 'px-2.5 py-1 bg-white border border-zinc-200 rounded-full text-[10px] font-bold text-orange-600',
+    title: title || (category === 'system' ? '系统公告' : '活动福利'),
+    content: content || '暂无内容'
+  }
+}
+
+const paymentMessageItems = Object.freeze([
+  {
+    id: 'payment-topup',
+    messageType: 'payment',
+    variant: 'payment-topup',
+    sortTs: parseMessageTimestamp('2026-03-15T14:32:00+08:00'),
+    dateText: '2026.03.15 14:32',
+    badgeText: '支付成功',
+    title: '积分充值成功',
+    content: '您已成功充值 1,500 积分，支付金额 ¥90.00。积分已到账，可立即用于视频生成。',
+    orderNo: 'PAY202603151432001',
+    amountText: '+1,500 积分'
+  },
+  {
+    id: 'payment-balance-warning',
+    messageType: 'payment',
+    variant: 'payment-balance-warning',
+    sortTs: parseMessageTimestamp('2026-03-14T09:15:00+08:00'),
+    dateText: '2026.03.14 09:15'
+  },
+  {
+    id: 'payment-subscription',
+    messageType: 'payment',
+    variant: 'payment-subscription',
+    sortTs: parseMessageTimestamp('2026-03-10T00:00:00+08:00'),
+    dateText: '2026.03.10 00:00',
+    orderNo: 'SUB202603100000001'
+  }
+])
+
+const messageTimelineItems = computed(() => {
+  const merged = [...notificationMessages.value, ...paymentMessageItems]
+  const filterType = normalizeMessageFilterType(messageFilterType.value)
+  const filtered =
+    filterType === 'all'
+      ? merged
+      : merged.filter((item = {}) => item.messageType === filterType)
+
+  return filtered.sort((a = {}, b = {}) => {
+    const aTs = Number(a.sortTs || 0)
+    const bTs = Number(b.sortTs || 0)
+    return bTs - aTs
+  })
+})
+
+async function refreshLucideIcons() {
+  if (typeof lucide === 'undefined') return
+  await nextTick()
+  lucide.createIcons()
 }
 
 function formatTransactionTime(value) {
@@ -229,6 +379,20 @@ async function loadCreditTransactions() {
     creditTransactions.value = []
   } finally {
     transactionsLoading.value = false
+  }
+}
+
+async function loadNotifications() {
+  try {
+    const result = await getNotifications()
+    const items = extractNotificationItems(result)
+    notificationMessages.value = items
+      .map((item = {}, index = 0) => normalizeNotificationItem(item, index))
+      .filter(Boolean)
+  } catch (error) {
+    notificationMessages.value = []
+  } finally {
+    refreshLucideIcons()
   }
 }
 
@@ -1024,6 +1188,7 @@ const modalProps = {
 onMounted(() => {
         syncLoginState()
         loadCurrentUserContext()
+        loadNotifications()
         loadPublicGallery()
         if(typeof window !== 'undefined') window.handleHomeDrop = handleHomeDrop;
         if(typeof window !== 'undefined') window.copyShareLink = copyShareLink;
@@ -2175,22 +2340,9 @@ onMounted(() => {
 
         // 消息筛选功能
         function setMessageFilter(el, type) {
-            // 更新按钮样式
-            document.querySelectorAll('#message-filters .message-filter').forEach(item => {
-                item.className = "message-filter px-4 py-2 rounded-full text-xs font-bold transition-all bg-white text-zinc-500 border border-zinc-200 hover:text-zinc-900 hover:border-zinc-300 whitespace-nowrap";
-            });
-            const activeButton = el || document.querySelector(`#message-filters .message-filter[data-filter="${type}"]`);
-            if (activeButton) {
-                activeButton.className = "message-filter px-4 py-2 rounded-full text-xs font-bold transition-all bg-zinc-900 text-white shadow-sm whitespace-nowrap";
-            }
-            
-            const messageItems = document.querySelectorAll('#view-messages [data-message-type]');
-            messageItems.forEach(msg => {
-                const matches = type === 'all' || msg.getAttribute('data-message-type') === type;
-                msg.style.display = matches ? 'block' : 'none';
-            });
-            
-            if(typeof lucide !== 'undefined') lucide.createIcons();
+            void el;
+            messageFilterType.value = normalizeMessageFilterType(type);
+            refreshLucideIcons();
         }
         function setAssetFilter(el) {
             document.querySelectorAll('#asset-filters .asset-filter').forEach(item => item.className = "asset-filter px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-white text-zinc-500 border border-zinc-200 hover:text-zinc-900 hover:border-zinc-300");
