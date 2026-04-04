@@ -17,6 +17,9 @@
     <WorkbenchModals
       v-bind="modalProps"
       :balance-display="balanceDisplay"
+      :is-logged-in="isLoggedIn"
+      :credit-transactions="creditTransactions"
+      :transactions-loading="transactionsLoading"
     />
   </div>
 </template>
@@ -31,12 +34,13 @@ import {
   clearLoginUserProfile,
   creditDailySignIn,
   getCreditBalance,
+  getCreditTransactions,
   getCurrentUserProfile,
+  getLoginToken,
   getLoginUserProfile,
   getPublics,
   setLoginUserProfile
 } from '../api/services'
-import cache from '@/plugins/cache'
 
 const router = useRouter()
 const isLoggedIn = ref(false)
@@ -44,6 +48,8 @@ const loginDisplayName = ref('当前已登录')
 const userDisplayName = ref('创作者_001')
 const balance = ref(0)
 const signingIn = ref(false)
+const creditTransactions = ref([])
+const transactionsLoading = ref(false)
 const balanceDisplay = computed(() => formatBalanceDisplay(balance.value))
 
 function formatBalanceDisplay(value) {
@@ -96,6 +102,44 @@ function extractBalance(payload = {}) {
   return 0
 }
 
+function pad2(value) {
+  return String(value).padStart(2, '0')
+}
+
+function formatTransactionTime(value) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`
+}
+
+function normalizeAmount(value) {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return 0
+  return num
+}
+
+function formatAmountText(value) {
+  const amount = normalizeAmount(value)
+  if (amount > 0) return `+${amount}`
+  if (amount < 0) return `-${Math.abs(amount)}`
+  return '0'
+}
+
+function extractTransactionItems(payload = {}) {
+  const candidates = [
+    payload?.data?.items,
+    payload?.items,
+    payload?.data?.data?.items,
+    payload?.data?.item,
+    payload?.item
+  ]
+  for (const items of candidates) {
+    if (Array.isArray(items)) return items
+  }
+  return []
+}
+
 function resolveUserDisplayName(profile = {}) {
   const name =
     profile?.display_name ||
@@ -118,14 +162,15 @@ function applyUserProfile(profile = null) {
 }
 
 function getStoredToken() {
-  const token = cache.local.get('token')
-  return typeof token === 'string' ? token.trim() : ''
+  return getLoginToken()
 }
 
 function syncLoginState() {
   isLoggedIn.value = Boolean(getStoredToken())
   if (!isLoggedIn.value) {
     balance.value = 0
+    creditTransactions.value = []
+    transactionsLoading.value = false
     applyUserProfile(null)
     return
   }
@@ -160,9 +205,36 @@ async function loadCreditBalance() {
   }
 }
 
+async function loadCreditTransactions() {
+  if (!getStoredToken()) return
+  transactionsLoading.value = true
+  try {
+    const result = await getCreditTransactions()
+    const items = extractTransactionItems(result)
+    creditTransactions.value = items.map((item = {}, index = 0) => {
+      const amount = normalizeAmount(item.amount)
+      return {
+        id: item.id || `${item.biz_id || 'credit'}-${index}`,
+        remark: item.remark || item.biz_type || '积分变动',
+        createdAtText: formatTransactionTime(item.created_at),
+        amount,
+        amountText: formatAmountText(amount)
+      }
+    })
+  } catch (error) {
+    creditTransactions.value = []
+  } finally {
+    transactionsLoading.value = false
+  }
+}
+
 async function loadCurrentUserContext() {
   if (!getStoredToken()) return
-  await Promise.allSettled([loadCurrentUserProfile(), loadCreditBalance()])
+  await Promise.allSettled([
+    loadCurrentUserProfile(),
+    loadCreditBalance(),
+    loadCreditTransactions()
+  ])
 }
 
 async function handleDailySignIn() {
@@ -179,6 +251,7 @@ async function handleDailySignIn() {
       showToast(message)
     }
     await loadCreditBalance()
+    await loadCreditTransactions()
     closeModal('checkin-modal')
   } catch (error) {
     const message = extractApiMessage(error)
@@ -1219,7 +1292,11 @@ onMounted(() => {
                 const userDropdown = document.getElementById('userDropdown');
                 if (userDropdown) userDropdown.classList.add('hidden');
                 switchGlobalTab('home');
-                router.push('/');
+                router.replace('/').finally(() => {
+                    if (typeof window !== 'undefined') {
+                        window.location.reload();
+                    }
+                });
             }
         }
 

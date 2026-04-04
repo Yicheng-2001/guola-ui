@@ -17,7 +17,7 @@
         <div class="points-pill">
           <i data-lucide="database" class="points-pill-icon"></i>
           <span class="points-pill-label">{{ t('available_points') }}:</span>
-          <span class="points-pill-value">1,200</span>
+          <span class="points-pill-value">{{ availablePointsDisplay }}</span>
         </div>
         <button class="avatar-btn">
           <img
@@ -145,6 +145,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { getCreditBalance, getLoginToken } from "../api/services";
 
 const { t } = useI18n();
 
@@ -171,8 +172,10 @@ const plans = [
 
 const selectedPlanIndex = ref(2);
 const selectedPayMethod = ref("wechat");
+const availablePoints = ref(0);
 
 const selectedPlan = computed(() => plans[selectedPlanIndex.value] || plans[0]);
+const availablePointsDisplay = computed(() => formatBalanceDisplay(availablePoints.value));
 
 const summaryPointsText = computed(() =>
   t("buy_points_amount_format", { points: selectedPlan.value.points })
@@ -190,7 +193,53 @@ function setPayMethod(method) {
   selectedPayMethod.value = method;
 }
 
+function parseBalanceNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const normalized = typeof value === "string" ? value.replace(/,/g, "").trim() : value;
+  const num = Number(normalized);
+  if (!Number.isFinite(num) || num < 0) return null;
+  return num;
+}
+
+function extractBalance(payload = {}) {
+  const candidates = [
+    payload?.data?.balance,
+    payload?.data?.data?.balance,
+    payload?.balance,
+    payload?.credit_balance,
+    payload?.data?.credit_balance
+  ];
+  for (const item of candidates) {
+    const parsed = parseBalanceNumber(item);
+    if (parsed !== null) return parsed;
+  }
+  return 0;
+}
+
+function formatBalanceDisplay(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0) return "0";
+  return new Intl.NumberFormat("zh-CN", {
+    maximumFractionDigits: 2
+  }).format(num);
+}
+
+async function loadAvailablePoints() {
+  const token = getLoginToken();
+  if (!token) {
+    availablePoints.value = 0;
+    return;
+  }
+  try {
+    const result = await getCreditBalance();
+    availablePoints.value = extractBalance(result);
+  } catch (error) {
+    availablePoints.value = 0;
+  }
+}
+
 onMounted(() => {
+  loadAvailablePoints();
   if (typeof lucide !== "undefined") {
     lucide.createIcons();
   }

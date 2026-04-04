@@ -72,33 +72,23 @@
             <div class="flex-1 overflow-y-auto p-2 no-scrollbar" id="points-details-list">
                 <table class="w-full text-left text-sm">
                     <tbody class="divide-y divide-zinc-100">
-                        <tr class="hover:bg-zinc-50 transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="points-modal-copy font-bold text-zinc-900" data-i18n="points_item_1080">Generate 1080P Video (10s)</div>
-                                <div class="text-xs text-zinc-400 mt-1 font-mono">2026-03-11 14:30</div>
-                            </td>
-                            <td class="px-6 py-4 text-right font-bold text-zinc-900 font-mono">- 20</td>
+                        <tr v-if="!isLoggedIn" class="hover:bg-zinc-50 transition-colors">
+                            <td class="px-6 py-4 text-center text-zinc-500" colspan="2">还未登录，无法获取积分明细</td>
                         </tr>
-                        <tr class="hover:bg-zinc-50 transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="points-modal-copy font-bold text-zinc-900" data-i18n="points_item_checkin">Daily Check-in Reward</div>
-                                <div class="text-xs text-zinc-400 mt-1 font-mono">2026-03-11 08:00</div>
-                            </td>
-                            <td class="px-6 py-4 text-right font-bold text-emerald-500 font-mono">+ 50</td>
+                        <tr v-else-if="transactionsLoading" class="hover:bg-zinc-50 transition-colors">
+                            <td class="px-6 py-4 text-center text-zinc-500" colspan="2">积分明细加载中...</td>
                         </tr>
-                        <tr class="hover:bg-zinc-50 transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="points-modal-copy font-bold text-zinc-900" data-i18n="points_item_invite">Invite Friend (User_8891)</div>
-                                <div class="text-xs text-zinc-400 mt-1 font-mono">2026-03-10 16:45</div>
-                            </td>
-                            <td class="px-6 py-4 text-right font-bold text-emerald-500 font-mono">+ 200</td>
+                        <tr v-else-if="!creditTransactions.length" class="hover:bg-zinc-50 transition-colors">
+                            <td class="px-6 py-4 text-center text-zinc-500" colspan="2">暂无积分明细</td>
                         </tr>
-                        <tr class="hover:bg-zinc-50 transition-colors">
+                        <tr v-for="item in creditTransactions" :key="item.id" class="hover:bg-zinc-50 transition-colors">
                             <td class="px-6 py-4">
-                                <div class="points-modal-copy font-bold text-zinc-900" data-i18n="points_item_4k">Generate 4K Video (5s)</div>
-                                <div class="text-xs text-zinc-400 mt-1 font-mono">2026-03-10 11:20</div>
+                                <div class="points-modal-copy font-bold text-zinc-900">{{ item.remark }}</div>
+                                <div class="text-xs text-zinc-400 mt-1 font-mono">{{ item.createdAtText }}</div>
                             </td>
-                            <td class="px-6 py-4 text-right font-bold text-zinc-900 font-mono">- 25</td>
+                            <td class="px-6 py-4 text-right font-bold font-mono" :class="item.amount > 0 ? 'text-emerald-500' : 'text-zinc-900'">
+                                {{ item.amountText }}
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -404,6 +394,9 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const {
   balanceDisplay,
+  creditTransactions,
+  isLoggedIn,
+  transactionsLoading,
   closeAssetDownloadModal,
   closeModal,
   closeVideoModal,
@@ -418,6 +411,9 @@ const {
   switchPointsTab
 } = defineProps([
   'balanceDisplay',
+  'creditTransactions',
+  'isLoggedIn',
+  'transactionsLoading',
   'closeAssetDownloadModal',
   'closeModal',
   'closeVideoModal',

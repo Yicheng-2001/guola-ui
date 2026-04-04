@@ -2,6 +2,31 @@ import axios from "axios";
 import cache from "@/plugins/cache";
 import errorCode from "@/api/errorCode";
 
+const TOKEN_KEY = "token";
+const TOKEN_TIME_KEY = "token_at";
+const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
+function getValidToken() {
+  const token = String(cache.local.get(TOKEN_KEY) || "").trim();
+  if (!token) return "";
+
+  const tokenAt = Number(cache.local.get(TOKEN_TIME_KEY));
+  if (!Number.isFinite(tokenAt) || tokenAt <= 0) {
+    // Strict mode: token without timestamp is treated as expired.
+    cache.local.remove(TOKEN_KEY);
+    cache.local.remove(TOKEN_TIME_KEY);
+    return "";
+  }
+
+  if (Date.now() - tokenAt >= TOKEN_TTL_MS) {
+    cache.local.remove(TOKEN_KEY);
+    cache.local.remove(TOKEN_TIME_KEY);
+    return "";
+  }
+
+  return token;
+}
+
 function showMessage(message, type = "error", duration) {
   const elMessage = globalThis?.ElMessage;
   if (elMessage) {
@@ -42,7 +67,7 @@ service.interceptors.request.use(
     const isRepeatSubmit = (config.headers || {}).repeatSubmit === false;
 
     if (!isToken) {
-      const token = cache.local.get("token");
+      const token = getValidToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

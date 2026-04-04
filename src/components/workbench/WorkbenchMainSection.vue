@@ -35,16 +35,9 @@
                             </div>
                         </div>
 
-                        <!-- 登录状态/按钮 -->
+                        <!-- 登录/注册按钮（仅未登录显示） -->
                         <button
-                            v-if="isLoggedIn"
-                            class="bg-zinc-100 text-zinc-700 px-5 py-2 rounded-full font-bold shadow-sm flex items-center gap-2 cursor-default"
-                        >
-                            <i data-lucide="badge-check" class="w-4 h-4"></i>
-                            <span>{{ loginDisplayName }}</span>
-                        </button>
-                        <button
-                            v-else
+                            v-if="!isLoggedIn"
                             @click="goLogin()"
                             class="bg-[#171717] text-white px-5 py-2 rounded-full font-bold hover:bg-black transition-colors shadow-sm active:scale-95 flex items-center gap-2"
                         >
@@ -891,6 +884,7 @@
     </main>
 </template>
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const props = defineProps([
@@ -932,8 +926,7 @@ const props = defineProps([
   'updateDurationFromTime',
   'galleryItems',
   'isLoggedIn',
-  'goLogin',
-  'loginDisplayName'
+  'goLogin'
 ])
 const {
   handleCreateDragLeave,
@@ -972,10 +965,9 @@ const {
   updateCustomDurationFromTime,
   updateDurationFromSlider,
   updateDurationFromTime,
-  isLoggedIn,
-  goLogin,
-  loginDisplayName
+  goLogin
 } = props
+const isLoggedIn = computed(() => Boolean(props.isLoggedIn))
 
 const getGalleryGridClass = (item = {}) => {
   const ratio = String(item.ratioClass || item.aspectRatio || item.ratio || '')
