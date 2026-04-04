@@ -33,6 +33,15 @@ export default defineConfig({
         proxyTimeout: 60000,
         rewrite: (path) => `/api${path}`,
       },
+      "/oss-proxy": {
+        target: "http://guolaya.oss-ap-southeast-1.aliyuncs.com",
+        changeOrigin: true,
+        secure: false,
+        ws: false,
+        timeout: 60000,
+        proxyTimeout: 60000,
+        rewrite: (path) => path.replace(/^\/oss-proxy/, ""),
+      },
     },
   },
 });

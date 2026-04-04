@@ -26,7 +26,7 @@
   </div>
 </template>
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import WorkbenchSidebar from '../components/workbench/WorkbenchSidebar.vue'
 import WorkbenchMainSection from '../components/workbench/WorkbenchMainSection.vue'
@@ -38,6 +38,7 @@ import {
   getCreditBalance,
   getCreditTransactions,
   getCurrentUserProfile,
+  getFileUploadParams,
   getLoginToken,
   getLoginUserProfile,
   getNotifications,
@@ -1263,6 +1264,8 @@ onMounted(() => {
         if(typeof window !== 'undefined') window.setCustomRatio = setCustomRatio;
         if(typeof window !== 'undefined') window.shareToXiaohongshu = shareToXiaohongshu;
             if(typeof lucide !== 'undefined') lucide.createIcons();
+            bindUploadBoxPickerEvents();
+            updateUploadDebugState();
 
             const titleObserver = new IntersectionObserver(([entry]) => {
                 const el = entry?.target || document.getElementById('home-main-title');
@@ -1565,112 +1568,377 @@ onMounted(() => {
             document.getElementById('home-custom-dropdown').classList.toggle('hidden');
         }
 
-        // 全局变量存储上传的图片
-        let homeUploadedImages = [];
+        const HOME_UPLOAD_PLACEHOLDER = `
+            <i data-lucide="plus" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px]">添加图片</span>
+        `
+        let homeUploadedFiles = []
+        let homeActiveFileIndex = -1
+        let createUploadedFile = null
 
-        function handleHomePaste(e) {
-            const items = (e.clipboardData || window.clipboardData).items;
-            let imageAdded = false;
-            for (let index in items) {
-                const item = items[index];
-                if (item.kind === 'file' && item.type.includes('image')) {
-                    const blob = item.getAsFile();
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        addHomeImage(event.target.result);
-                        setGenType('图生视频'); 
-                    };
-                    reader.readAsDataURL(blob);
-                    imageAdded = true;
-                }
+        function isImageFile(file = {}) {
+            const type = String(file.type || '').toLowerCase()
+            if (type.startsWith('image/')) return true
+            const fileName = String(file.name || '').toLowerCase()
+            return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(fileName)
+        }
+
+        function buildFileNameWithExt(file = {}) {
+            const fileName = String(file.name || '').trim()
+            if (fileName) return fileName
+            const mime = String(file.type || '').toLowerCase()
+            const map = {
+                'image/jpeg': 'jpg',
+                'image/png': 'png',
+                'image/webp': 'webp',
+                'image/gif': 'gif',
+                'application/pdf': 'pdf',
+                'text/plain': 'txt'
             }
-            // 如果不是图片粘贴，不阻止默认行为（允许文本粘贴）
-            if (!imageAdded) {
-                return true;
+            const ext = map[mime] ? `.${map[mime]}` : ''
+            return `upload-${Date.now()}${ext}`
+        }
+
+        function normalizeUploadParamsPayload(payload = {}) {
+            const data = payload?.data || payload?.data?.data || payload
+            return {
+                upload_url: String(data?.upload_url || data?.uploadUrl || '').trim(),
+                file_key: String(data?.file_key || data?.fileKey || '').trim(),
+                file_url: String(data?.file_url || data?.fileUrl || '').trim()
             }
         }
 
-        function addHomeImage(imageSrc) {
-            // 添加到图片数组
-            homeUploadedImages.push(imageSrc);
-            
-            // 更新占位框显示最后上传的图片
-            const imgEl = document.getElementById('home-pasted-image');
-            const placeholderEl = document.getElementById('home-upload-placeholder');
-            const removeBtn = document.getElementById('home-remove-img-btn');
-            const imageBox = document.getElementById('home-image-box');
-            
-            imgEl.src = imageSrc;
-            imgEl.classList.remove('hidden');
-            placeholderEl.classList.add('hidden');
-            removeBtn.classList.remove('hidden');
-            removeBtn.classList.add('flex');
-            // 移除虚线边框，改为实线边框（有图片时）
-            imageBox.classList.remove('border-dashed');
-            imageBox.classList.add('border-solid');
-            
-            // 更新图片标签
-            updateHomeImageTags();
-            
-            showToast('图片已添加');
+        async function requestUploadParams(file) {
+            const fileNameWithExt = buildFileNameWithExt(file)
+            console.log('[OSS][upload-params][request]', {
+                filename: fileNameWithExt
+            })
+            const result = await getFileUploadParams(fileNameWithExt)
+            const uploadParams = normalizeUploadParamsPayload(result)
+            if (!uploadParams.upload_url || !uploadParams.file_key) {
+                throw new Error('上传签名返回缺少 upload_url 或 file_key')
+            }
+            console.log('[OSS][upload-params][response]', {
+                upload_url: uploadParams.upload_url,
+                file_key: uploadParams.file_key,
+                file_url: uploadParams.file_url || ''
+            })
+            return {
+                ...uploadParams,
+                file_name: fileNameWithExt
+            }
+        }
+
+        function resolveOssUploadUrl(uploadUrl) {
+            const raw = String(uploadUrl || '').trim()
+            if (!raw) return raw
+            if (!import.meta.env.DEV) return raw
+            try {
+                const parsed = new URL(raw)
+                return `/oss-proxy${parsed.pathname}${parsed.search}`
+            } catch (error) {
+                return raw
+            }
+        }
+
+        async function uploadFileToOss(file) {
+            const uploadParams = await requestUploadParams(file)
+            const uploadTarget = resolveOssUploadUrl(uploadParams.upload_url)
+            const binary = await file.arrayBuffer()
+            const response = await fetch(uploadTarget, {
+                method: 'PUT',
+                body: binary
+            })
+
+            if (!response.ok) {
+                const detail = await response.text().catch(() => '')
+                console.error('[OSS][put][error]', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    upload_target: uploadTarget,
+                    upload_url: uploadParams.upload_url,
+                    file_key: uploadParams.file_key,
+                    file_url: uploadParams.file_url || '',
+                    response_body: detail || ''
+                })
+                throw new Error(`云端上传失败(${response.status})${detail ? `: ${detail}` : ''}`)
+            }
+
+            const responseBody = await response.text().catch(() => '')
+            const responseHeaders = Object.fromEntries(response.headers.entries())
+            console.log('[OSS][put][success]', {
+                status: response.status,
+                statusText: response.statusText,
+                etag: response.headers.get('etag') || '',
+                oss_request_id: response.headers.get('x-oss-request-id') || '',
+                response_headers: responseHeaders,
+                response_body: responseBody || '',
+                upload_url: uploadParams.upload_url,
+                file_key: uploadParams.file_key,
+                file_url: uploadParams.file_url || '',
+                file_name: uploadParams.file_name
+            })
+
+            return uploadParams
+        }
+
+        function createUploadRecord(file, uploadParams, source) {
+            return {
+                id: `upload-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+                source,
+                name: String(file?.name || uploadParams.file_name || '').trim(),
+                type: String(file?.type || '').trim(),
+                size: Number(file?.size || 0),
+                previewUrl: isImageFile(file) ? URL.createObjectURL(file) : '',
+                upload: {
+                    upload_url: uploadParams.upload_url,
+                    file_key: uploadParams.file_key,
+                    file_url: uploadParams.file_url,
+                    file_name: uploadParams.file_name
+                }
+            }
+        }
+
+        function revokeFilePreview(record) {
+            const previewUrl = String(record?.previewUrl || '')
+            if (previewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl)
+            }
+        }
+
+        function truncateText(text, max = 12) {
+            const value = String(text || '')
+            if (value.length <= max) return value
+            return `${value.slice(0, max)}...`
+        }
+
+        function updateUploadDebugState() {
+            if (typeof window === 'undefined') return
+            const mapToSubmit = (record = {}) => ({
+                file_key: String(record?.upload?.file_key || '').trim(),
+                file_url: String(record?.upload?.file_url || '').trim(),
+                upload_url: String(record?.upload?.upload_url || '').trim(),
+                file_name: String(record?.upload?.file_name || record?.name || '').trim(),
+                file_type: String(record?.type || '').trim(),
+                file_size: Number(record?.size || 0),
+                source: String(record?.source || '').trim()
+            })
+            window.__ossUploadState = {
+                home_files: homeUploadedFiles.map(mapToSubmit).filter((item) => item.file_key),
+                create_file: createUploadedFile ? mapToSubmit(createUploadedFile) : null
+            }
+            console.log('[OSS][state]', window.__ossUploadState)
+        }
+
+        function openFilePicker({ multiple = false, onSelect } = {}) {
+            const input = document.createElement('input')
+            input.type = 'file'
+            input.multiple = !!multiple
+            input.style.display = 'none'
+            document.body.appendChild(input)
+
+            const cleanup = () => {
+                if (input.parentNode) {
+                    input.parentNode.removeChild(input)
+                }
+            }
+
+            input.addEventListener('change', () => {
+                const files = Array.from(input.files || [])
+                cleanup()
+                if (files.length > 0 && typeof onSelect === 'function') {
+                    onSelect(files)
+                }
+            }, { once: true })
+
+            input.click()
+        }
+
+        function renderHomePrimaryFile() {
+            const imgEl = document.getElementById('home-pasted-image')
+            const placeholderEl = document.getElementById('home-upload-placeholder')
+            const removeBtn = document.getElementById('home-remove-img-btn')
+            const imageBox = document.getElementById('home-image-box')
+
+            if (!imgEl || !placeholderEl || !removeBtn || !imageBox) return
+
+            if (!homeUploadedFiles.length) {
+                resetHomeImageBox()
+                return
+            }
+
+            if (homeActiveFileIndex < 0 || homeActiveFileIndex >= homeUploadedFiles.length) {
+                homeActiveFileIndex = homeUploadedFiles.length - 1
+            }
+
+            const activeFile = homeUploadedFiles[homeActiveFileIndex]
+            const hasPreview = !!activeFile?.previewUrl
+
+            if (hasPreview) {
+                imgEl.src = activeFile.previewUrl
+                imgEl.classList.remove('hidden')
+                placeholderEl.classList.add('hidden')
+            } else {
+                imgEl.src = ''
+                imgEl.classList.add('hidden')
+                placeholderEl.classList.remove('hidden')
+                placeholderEl.innerHTML = `
+                    <i data-lucide="file" class="w-5 h-5 mb-1"></i>
+                    <span class="text-[10px] px-1 text-center">${truncateText(activeFile?.name || '文件')}</span>
+                `
+            }
+
+            removeBtn.classList.remove('hidden')
+            removeBtn.classList.add('flex')
+            imageBox.classList.remove('border-dashed')
+            imageBox.classList.add('border-solid')
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons()
+            }
         }
 
         function updateHomeImageTags() {
-            const tagsContainer = document.getElementById('home-image-tags');
-            tagsContainer.innerHTML = '';
-            
-            homeUploadedImages.forEach((img, index) => {
-                const tag = document.createElement('div');
-                tag.className = 'inline-flex items-center gap-2 pl-1 pr-1.5 py-1 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-xs text-zinc-600 cursor-pointer transition-colors group';
-                tag.innerHTML = `
-                    <img src="${img}" class="w-5 h-5 rounded object-cover border border-zinc-200" />
-                    <span>图片${index + 1}</span>
-                    <button onclick="event.stopPropagation(); removeHomeImageByIndex(${index})" class="p-0.5 hover:bg-zinc-300 rounded transition-colors">
-                        <i data-lucide="x" class="w-3 h-3"></i>
-                    </button>
-                `;
-                // 点击标签可以切换显示该图片
-                tag.onclick = function(e) {
-                    if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
-                        document.getElementById('home-pasted-image').src = img;
-                    }
-                };
-                tagsContainer.appendChild(tag);
-            });
-            
-            if(typeof lucide !== 'undefined') lucide.createIcons();
+            const tagsContainer = document.getElementById('home-image-tags')
+            if (!tagsContainer) return
+            tagsContainer.innerHTML = ''
+
+            homeUploadedFiles.forEach((record, index) => {
+                const tag = document.createElement('div')
+                tag.className = 'inline-flex items-center gap-2 pl-1 pr-1.5 py-1 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-xs text-zinc-600 cursor-pointer transition-colors group'
+
+                const thumb = document.createElement('div')
+                thumb.className = 'w-5 h-5 rounded border border-zinc-200 overflow-hidden bg-white flex items-center justify-center shrink-0'
+                if (record.previewUrl) {
+                    const img = document.createElement('img')
+                    img.src = record.previewUrl
+                    img.className = 'w-full h-full object-cover'
+                    thumb.appendChild(img)
+                } else {
+                    const icon = document.createElement('i')
+                    icon.setAttribute('data-lucide', 'file')
+                    icon.className = 'w-3 h-3 text-zinc-500'
+                    thumb.appendChild(icon)
+                }
+
+                const text = document.createElement('span')
+                text.textContent = truncateText(record?.name || `文件${index + 1}`, 16)
+
+                const removeBtn = document.createElement('button')
+                removeBtn.type = 'button'
+                removeBtn.className = 'p-0.5 hover:bg-zinc-300 rounded transition-colors'
+                removeBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i>'
+                removeBtn.addEventListener('click', (event) => {
+                    event.stopPropagation()
+                    removeHomeImageByIndex(index)
+                })
+
+                tag.appendChild(thumb)
+                tag.appendChild(text)
+                tag.appendChild(removeBtn)
+                tag.addEventListener('click', () => {
+                    homeActiveFileIndex = index
+                    renderHomePrimaryFile()
+                })
+                tagsContainer.appendChild(tag)
+            })
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons()
+            }
+        }
+
+        async function handleHomeFilesSelected(fileList = []) {
+            const files = Array.from(fileList).filter((file) => file instanceof File)
+            if (!files.length) return
+
+            let successCount = 0
+            for (const file of files) {
+                try {
+                    const uploadParams = await uploadFileToOss(file)
+                    const record = createUploadRecord(file, uploadParams, 'home')
+                    homeUploadedFiles.push(record)
+                    homeActiveFileIndex = homeUploadedFiles.length - 1
+                    successCount += 1
+                } catch (error) {
+                    showToast(`文件上传失败：${extractApiMessage(error) || '请重试'}`)
+                }
+            }
+
+            if (successCount > 0) {
+                renderHomePrimaryFile()
+                updateHomeImageTags()
+                updateUploadDebugState()
+                setGenType('图生视频')
+                showToast(successCount > 1 ? `已上传 ${successCount} 个文件` : '文件已上传到云端')
+            }
+        }
+
+        function dataUrlToFile(dataUrl, fileName = `pasted-${Date.now()}.png`) {
+            const value = String(dataUrl || '')
+            if (!value.startsWith('data:')) return null
+            const chunks = value.split(',')
+            if (chunks.length < 2) return null
+            const mimeMatch = chunks[0].match(/data:(.*?);base64/)
+            const mime = mimeMatch?.[1] || 'application/octet-stream'
+            const binary = atob(chunks[1])
+            const len = binary.length
+            const bytes = new Uint8Array(len)
+            for (let i = 0; i < len; i += 1) {
+                bytes[i] = binary.charCodeAt(i)
+            }
+            return new File([bytes], fileName, { type: mime })
+        }
+
+        function addHomeImage(imageSrc) {
+            const file = dataUrlToFile(imageSrc)
+            if (!file) {
+                showToast('无法识别粘贴文件')
+                return
+            }
+            void handleHomeFilesSelected([file])
         }
 
         function removeHomeImageByIndex(index) {
-            homeUploadedImages.splice(index, 1);
-            
-            if (homeUploadedImages.length === 0) {
-                // 没有图片了，恢复默认状态
-                resetHomeImageBox();
-                setGenType('文生视频');
-            } else {
-                // 显示最后一张图片
-                const lastImg = homeUploadedImages[homeUploadedImages.length - 1];
-                document.getElementById('home-pasted-image').src = lastImg;
+            if (index < 0 || index >= homeUploadedFiles.length) return
+            const removed = homeUploadedFiles.splice(index, 1)
+            if (removed.length) {
+                revokeFilePreview(removed[0])
             }
-            
-            updateHomeImageTags();
+
+            if (!homeUploadedFiles.length) {
+                homeActiveFileIndex = -1
+                resetHomeImageBox()
+                setGenType('文生视频')
+            } else {
+                homeActiveFileIndex = Math.min(index, homeUploadedFiles.length - 1)
+                renderHomePrimaryFile()
+            }
+
+            updateHomeImageTags()
+            updateUploadDebugState()
         }
 
         function resetHomeImageBox() {
-            const imgEl = document.getElementById('home-pasted-image');
-            const placeholderEl = document.getElementById('home-upload-placeholder');
-            const removeBtn = document.getElementById('home-remove-img-btn');
-            const imageBox = document.getElementById('home-image-box');
-            
-            imgEl.src = '';
-            imgEl.classList.add('hidden');
-            placeholderEl.classList.remove('hidden');
-            removeBtn.classList.add('hidden');
-            removeBtn.classList.remove('flex');
-            // 恢复虚线边框
-            imageBox.classList.add('border-dashed');
-            imageBox.classList.remove('border-solid');
+            const imgEl = document.getElementById('home-pasted-image')
+            const placeholderEl = document.getElementById('home-upload-placeholder')
+            const removeBtn = document.getElementById('home-remove-img-btn')
+            const imageBox = document.getElementById('home-image-box')
+
+            if (!imgEl || !placeholderEl || !removeBtn || !imageBox) return
+
+            imgEl.src = ''
+            imgEl.classList.add('hidden')
+            placeholderEl.innerHTML = HOME_UPLOAD_PLACEHOLDER
+            placeholderEl.classList.remove('hidden')
+            removeBtn.classList.add('hidden')
+            removeBtn.classList.remove('flex')
+            imageBox.classList.add('border-dashed')
+            imageBox.classList.remove('border-solid')
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons()
+            }
         }
 
         // ========== 主界面拖拽图片功能 ==========
@@ -1692,16 +1960,26 @@ onMounted(() => {
             e.preventDefault();
             e.stopPropagation();
             document.getElementById('home-drag-overlay').classList.add('hidden');
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    addHomeImage(event.target.result);
-                    setGenType('图生视频');
-                };
-                reader.readAsDataURL(files[0]);
+
+            const files = Array.from(e.dataTransfer?.files || [])
+            if (files.length > 0) {
+                void handleHomeFilesSelected(files)
             }
+        }
+
+        function handleHomePaste(e) {
+            const items = Array.from((e.clipboardData || window.clipboardData)?.items || [])
+            const files = items
+                .filter((item) => item?.kind === 'file')
+                .map((item) => item.getAsFile())
+                .filter((file) => file instanceof File)
+
+            if (!files.length) {
+                return true
+            }
+
+            e.preventDefault()
+            void handleHomeFilesSelected(files)
         }
 
         // ========== 主界面字数统计与限制 ==========
@@ -1749,28 +2027,92 @@ onMounted(() => {
             }
         }
 
+        function ensureCreateFileMetaElement() {
+            const previewContainer = document.getElementById('create-image-preview-container')
+            if (!previewContainer) return null
+            let metaEl = document.getElementById('create-file-meta')
+            if (!metaEl) {
+                metaEl = document.createElement('div')
+                metaEl.id = 'create-file-meta'
+                metaEl.className = 'hidden absolute inset-0 flex flex-col items-center justify-center text-zinc-600 gap-2'
+                previewContainer.appendChild(metaEl)
+            }
+            return metaEl
+        }
+
+        function renderCreateFile(record) {
+            const previewContainer = document.getElementById('create-image-preview-container')
+            const placeholder = document.getElementById('create-drop-placeholder')
+            const imageEl = document.getElementById('create-dropped-image')
+            const metaEl = ensureCreateFileMetaElement()
+            if (!previewContainer || !placeholder || !imageEl || !metaEl) return
+
+            if (!record) {
+                imageEl.src = ''
+                imageEl.classList.remove('hidden')
+                previewContainer.classList.add('hidden')
+                placeholder.classList.remove('hidden')
+                metaEl.classList.add('hidden')
+                return
+            }
+
+            previewContainer.classList.remove('hidden')
+            placeholder.classList.add('hidden')
+            if (record.previewUrl) {
+                imageEl.src = record.previewUrl
+                imageEl.classList.remove('hidden')
+                metaEl.classList.add('hidden')
+            } else {
+                imageEl.src = ''
+                imageEl.classList.add('hidden')
+                metaEl.classList.remove('hidden')
+                metaEl.innerHTML = `
+                    <i data-lucide="file" class="w-10 h-10"></i>
+                    <p class="text-xs font-medium px-3 text-center break-all">${record.name || '文件已上传'}</p>
+                `
+            }
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons()
+            }
+        }
+
+        async function handleCreateFilesSelected(fileList = []) {
+            const file = Array.from(fileList).find((item) => item instanceof File)
+            if (!file) return
+
+            try {
+                const uploadParams = await uploadFileToOss(file)
+                if (createUploadedFile) {
+                    revokeFilePreview(createUploadedFile)
+                }
+                createUploadedFile = createUploadRecord(file, uploadParams, 'create')
+                renderCreateFile(createUploadedFile)
+                updateUploadDebugState()
+                showToast('文件已上传到云端')
+            } catch (error) {
+                showToast(`文件上传失败：${extractApiMessage(error) || '请重试'}`)
+            }
+        }
+
         function handleCreateDrop(e) {
             e.preventDefault();
             e.stopPropagation();
             document.getElementById('create-drag-overlay').classList.add('hidden');
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    document.getElementById('create-dropped-image').src = event.target.result;
-                    document.getElementById('create-image-preview-container').classList.remove('hidden');
-                    document.getElementById('create-drop-placeholder').classList.add('hidden');
-                    showToast('图片已添加');
-                };
-                reader.readAsDataURL(files[0]);
+
+            const files = Array.from(e.dataTransfer?.files || [])
+            if (files.length > 0) {
+                void handleCreateFilesSelected(files)
             }
         }
 
         function removeCreateImage() {
-            document.getElementById('create-dropped-image').src = '';
-            document.getElementById('create-image-preview-container').classList.add('hidden');
-            document.getElementById('create-drop-placeholder').classList.remove('hidden');
+            if (createUploadedFile) {
+                revokeFilePreview(createUploadedFile)
+            }
+            createUploadedFile = null
+            renderCreateFile(null)
+            updateUploadDebugState()
         }
 
         // ========== 创作界面字数统计与限制 ==========
@@ -1806,26 +2148,84 @@ onMounted(() => {
                 showToast('提示词最多支持1000字，当前' + count + '字');
                 return;
             }
-            
-            // 这里可以添加实际的生成逻辑
-            showToast('开始生成视频...');
+
+            const normalizeRecord = (record = {}) => ({
+                file_key: String(record?.upload?.file_key || '').trim(),
+                file_url: String(record?.upload?.file_url || '').trim(),
+                upload_url: String(record?.upload?.upload_url || '').trim(),
+                file_name: String(record?.upload?.file_name || record?.name || '').trim(),
+                file_type: String(record?.type || '').trim(),
+                file_size: Number(record?.size || 0),
+                source: String(record?.source || '').trim()
+            })
+            const uploadMap = new Map()
+            homeUploadedFiles.forEach((record) => {
+                const normalized = normalizeRecord(record)
+                if (normalized.file_key) {
+                    uploadMap.set(normalized.file_key, normalized)
+                }
+            })
+            if (createUploadedFile) {
+                const normalizedCreate = normalizeRecord(createUploadedFile)
+                if (normalizedCreate.file_key) {
+                    uploadMap.set(normalizedCreate.file_key, normalizedCreate)
+                }
+            }
+
+            const payload = {
+                prompt: String(input.value || '').trim(),
+                model: currentCreateMode,
+                duration_seconds: Math.max(5, Math.min(180, Number(homeCreationSettings.durationSeconds) || 5)),
+                resolution: homeCreationSettings.resolution || '1080p',
+                ratio: homeCreationSettings.ratio || '16:9',
+                gen_type: String(document.getElementById('current-create-gen-type')?.innerText || '').trim() || '文生视频',
+                uploads: Array.from(uploadMap.values())
+            }
+
+            if (typeof window !== 'undefined') {
+                window.__lastGeneratePayload = payload
+            }
+            console.log('[GeneratePayload]', payload)
+            showToast('开始生成视频，已将请求数据打印到控制台');
         }
 
         function removeHomeImage() {
-            // 清除所有图片
-            homeUploadedImages = [];
-            
-            // 恢复占位框默认状态
-            resetHomeImageBox();
-            
-            // 清除图片标签
-            updateHomeImageTags();
-            
-            setGenType('文生视频');
-            
-            // 重新渲染图标确保显示正确
-            if (typeof lucide !== 'undefined') {
-                if(typeof lucide !== 'undefined') lucide.createIcons();
+            homeUploadedFiles.forEach((record) => revokeFilePreview(record))
+            homeUploadedFiles = []
+            homeActiveFileIndex = -1
+            resetHomeImageBox()
+            updateHomeImageTags()
+            setGenType('文生视频')
+            updateUploadDebugState()
+        }
+
+        function bindUploadBoxPickerEvents() {
+            const homeImageBox = document.getElementById('home-image-box')
+            if (homeImageBox && homeImageBox.dataset.pickerBound !== '1') {
+                homeImageBox.dataset.pickerBound = '1'
+                homeImageBox.addEventListener('click', (event) => {
+                    if (event?.target?.closest?.('#home-remove-img-btn')) return
+                    openFilePicker({
+                        multiple: true,
+                        onSelect: (files) => {
+                            void handleHomeFilesSelected(files)
+                        }
+                    })
+                })
+            }
+
+            const createDropZone = document.getElementById('create-drop-zone')
+            if (createDropZone && createDropZone.dataset.pickerBound !== '1') {
+                createDropZone.dataset.pickerBound = '1'
+                createDropZone.addEventListener('click', (event) => {
+                    if (event?.target?.closest?.('button')) return
+                    openFilePicker({
+                        multiple: false,
+                        onSelect: (files) => {
+                            void handleCreateFilesSelected(files)
+                        }
+                    })
+                })
             }
         }
 

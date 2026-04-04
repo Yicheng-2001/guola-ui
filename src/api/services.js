@@ -110,6 +110,16 @@ export function getPublics(page, page_size) {
   });
 }
 
+export function getFileUploadParams(fileNameWithExt) {
+  return request({
+    url: "/v1/files/upload-params",
+    method: "get",
+    params: {
+      filename: String(fileNameWithExt || "").trim(),
+    },
+  });
+}
+
 export function setLoginToken(token) {
   const value = String(token || "").trim();
   if (!value) {
