@@ -110,7 +110,8 @@ function formatTransactionTime(value) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value)
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`
+  const beijingDate = new Date(date.getTime() + 8 * 60 * 60 * 1000)
+  return `${beijingDate.getUTCFullYear()}-${pad2(beijingDate.getUTCMonth() + 1)}-${pad2(beijingDate.getUTCDate())} ${pad2(beijingDate.getUTCHours())}:${pad2(beijingDate.getUTCMinutes())}:${pad2(beijingDate.getUTCSeconds())}`
 }
 
 function normalizeAmount(value) {
@@ -213,10 +214,13 @@ async function loadCreditTransactions() {
     const items = extractTransactionItems(result)
     creditTransactions.value = items.map((item = {}, index = 0) => {
       const amount = normalizeAmount(item.amount)
+      const createdAtBeijing = formatTransactionTime(item.created_at)
       return {
+        ...item,
+        created_at: createdAtBeijing,
         id: item.id || `${item.biz_id || 'credit'}-${index}`,
         remark: item.remark || item.biz_type || '积分变动',
-        createdAtText: formatTransactionTime(item.created_at),
+        createdAtText: createdAtBeijing,
         amount,
         amountText: formatAmountText(amount)
       }
