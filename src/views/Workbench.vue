@@ -32,6 +32,12 @@ import WorkbenchSidebar from '../components/workbench/WorkbenchSidebar.vue'
 import WorkbenchMainSection from '../components/workbench/WorkbenchMainSection.vue'
 import WorkbenchModals from '../components/workbench/WorkbenchModals.vue'
 import {
+  getCurrentLanguage,
+  getLanguageLabel,
+  getMessageText,
+  switchLanguage
+} from '../i18n'
+import {
   clearLoginToken,
   clearLoginUserProfile,
   creditDailySignIn,
@@ -586,316 +592,37 @@ async function loadPublicGallery() {
 
 
         // --------- 多语言系统 (i18n) ---------
-        const i18nData = {
-            zh: {
-                nav_home: "首页",
-                nav_create: "创作",
-                nav_assets: "资产",
-                nav_messages: "消息",
-                nav_faq: "常见问题",
-                join_beta_group: "加入内测微信群",
-                join_wechat_group_desc: "扫码加入官方微信群，获取最新模型动态与专属福利。",
-                scan_wechat: "微信扫一扫",
-                lang_zh: "中文",
-                lang_en: "English",
-                assets_desc: "您的所有创意结晶，均安全存放于此。",
-                all_files: "全部文件",
-                videos: "视频",
-                images: "图片",
-                my_favorites: "我的收藏",
-                messages_desc: "第一时间获取官方活动与系统公告。",
-                system_notice: "系统公告",
-                phone_login: "手机号登录",
-                wechat_login: "微信扫码",
-                scan_wechat_login: "请使用微信扫一扫登录",
-                points_center_title: "积分中心",
-                available_points: "当前可用积分",
-                points_details_tab: "积分明细",
-                points_rules: "积分规则",
-                points_what: "1. 积分是什么？",
-                points_what_desc: "用户可通过消耗积分来使用过啦AI平台提供的AI生成功能，每日来过啦AI平台即可获得免费50积分，开通过啦AI会员后可以获得更多积分。",
-                points_types: "2. 积分的类别、有效期以及获得方式有哪些？",
-                points_attr: "积分属性",
-                points_category: "积分类别",
-                points_how: "获得方式",
-                points_validity: "有效期",
-                points_subscription: "订阅积分",
-                points_gift: "赠送积分",
-                points_daily_free: "每日免费积分",
-                points_lucky: "随机幸运积分",
-                points_recharge: "充值积分",
-                points_buy_member: "购买会员服务",
-                points_login: "登录过啦AI平台",
-                points_recharge_get: "充值获得",
-                points_subscription_validity: "在订阅有效期内以月为周期发放，自发放之日起有效期30天",
-                points_daily_validity: "当日24:00清零",
-                points_recharge_validity: "有效期1年",
-                points_order: "3. 积分消耗顺序？",
-                points_order_desc: "按照积分有效期，先消耗即将过期的积分，默认的积分消耗顺序依次为每日免费积分、订阅积分、充值积分。",
-                points_recharge_rule: "4. 积分充值",
-                points_recharge_desc: "您可以通过充值获得积分，如您选择通过人民币充值获得积分，需要提示您积分充值服务为收费服务，积分为虚拟商品采用先收费后服务的方式。请您仔细阅读以下字段，并在理解和同意的前提下继续使用本产品：积分充值成功后，将不支持退款或反向兑换为人民币。",
-                points_price: "5. 充值价格表",
-                points_contact: "6. 联系我们",
-                points_contact_desc: "如果您对于积分获得和使用有任何问题或建议，可在过啦AI平台【联系我们】栏中输入您需要反馈的问题，并留下您的联系方式，我们会有官方服务人员与您联系并帮助您解决问题。",
-                points_item_1080: "生成 1080P 视频 (10s)",
-                points_item_checkin: "每日签到奖励",
-                points_item_invite: "邀请好友 (User_8891)",
-                points_item_4k: "生成 4K 视频 (5s)",
-                points_500: "500积分",
-                points_750: "750积分",
-                points_1500: "1500积分",
-                points_2250: "2250积分",
-                points_4500: "4500积分",
-                points_9000: "9000积分",
-                buy_points: "购买积分",
-                home_prompt_placeholder: "描述你想生成的视频内容... (支持在此直接粘贴图片)",
-                create_prompt_placeholder: "请详细描述视频画面。例如：电影级质感，航拍视角，一辆复古跑车行驶在蜿蜒的海岸线公路上...",
-                clear_content: "清空内容",
-                create_scene_description: "画面描述",
-                prompt_polish: "提示词润色",
-                visual_reference: "视觉参考",
-                optional: "选填",
-                upload_first_last_frame: "点击或拖拽上传首尾帧",
-                support_jpg_png: "支持 JPG, PNG",
-                consume_points: "消耗 {points} 积分",
-                search_assets: "搜索资产...",
-                phone_number: "请输入手机号",
-                verification_code: "验证码",
-                get_verification_code: "获取验证码",
-                enter_guolaya: "进入 GuolaYa",
-                hero_title_prefix: "过啦一下，你就是",
-                hero_title_suffix: "大师",
-                mode_artist: "艺术",
-                mode_storybook: "绘本",
-                hero_subtitle: "输入想象，输出世界。AI 将为您生成极具质感的视听盛宴。",
-                txt2vid: "文生视频",
-                img2vid: "图生视频",
-                style_artist: "艺术家",
-                style_storybook: "绘本",
-                custom_settings: "自定义",
-                duration: "生成时长",
-                resolution: "清晰度",
-                aspect_ratio: "画幅比例",
-                discover: "发现",
-                gallery_search: "搜索视频...",
-                all: "全部精选",
-                official_picks: "官方推荐",
-                storybook_picks: "精选绘本",
-                artist_picks: "精选艺术家",
-                gallery: "审美库",
-                cinematic: "电影级短片",
-                concept: "概念海报",
-                anime: "动漫二次元",
-                product: "产品摄影",
-                faq: "常见问题 (FAQ)",
-                faq_q1: "积分如何获取和消耗？",
-                faq_a1: "每日登录可免费领取签到积分，邀请好友注册也能获得丰厚奖励。根据生成的时长和画质（720P/1080P），单次任务将消耗 10-50 不等的积分。",
-                faq_q2: "支持哪些视频画幅比例？",
-                faq_a2: "我们提供 16:9 (横屏视频), 9:16 (短视频), 1:1 (正方形) 等多种画幅支持。",
-                faq_q3: "上传的首尾帧图有格式限制吗？",
-                faq_a3: "支持 JPG, PNG 格式的高清图片，单张图片建议不超过 10MB，分辨率最低建议为 1080x1080 像素以保证生成效果。",
-                faq_q4: "生成的视频可以商用吗？",
-                faq_a4: "平台生成的所有视频版权归创作者所有，完全支持在小红书、抖音等平台的发布和正规商业化用途。",
-                start_generate: "开始生成",
-                recent_tasks: "最近生成任务",
-                assets_management: "资产管理",
-                official_messages: "消息与通知",
-                user_name: "创作者_001",
-                user_role: "普通用户",
-                points: "积分",
-                points_details: "积分消耗明细",
-                points_center: "积分中心",
-                daily_checkin: "签到 / 邀请送积分",
-                logout: "退出登录",
-                login_register: "登录 / 注册",
-                privacy: "隐私政策",
-                terms: "服务条款",
-                contact: "联系我们"
-            },
-            en: {
-                nav_home: "Home",
-                nav_create: "Create",
-                nav_assets: "Assets",
-                nav_messages: "Messages",
-                nav_faq: "FAQ",
-                join_beta_group: "Join Beta Group",
-                join_wechat_group_desc: "Scan to join the official WeChat group and get the latest model updates and exclusive benefits.",
-                scan_wechat: "Scan with WeChat",
-                lang_zh: "中文",
-                lang_en: "English",
-                assets_desc: "All your creative works are safely stored here.",
-                all_files: "All Files",
-                videos: "Videos",
-                images: "Images",
-                my_favorites: "My Favorites",
-                messages_desc: "Get official activities and system notices in real time.",
-                system_notice: "System Notice",
-                phone_login: "Phone Login",
-                wechat_login: "WeChat Scan",
-                scan_wechat_login: "Please use WeChat to scan and login",
-                points_center_title: "Points Center",
-                available_points: "Available Points",
-                points_details_tab: "Points Details",
-                points_rules: "Points Rules",
-                points_what: "1. What are points?",
-                points_what_desc: "Users can consume points to use AI generation features. Get 50 free points daily by logging in, and more points with membership.",
-                points_types: "2. Point Types, Validity & How to Earn",
-                points_attr: "Attribute",
-                points_category: "Category",
-                points_how: "How to Earn",
-                points_validity: "Validity",
-                points_subscription: "Subscription Points",
-                points_gift: "Gift Points",
-                points_daily_free: "Daily Free Points",
-                points_lucky: "Random Lucky Points",
-                points_recharge: "Recharge Points",
-                points_buy_member: "Purchase Membership",
-                points_login: "Login to GuolaYa AI",
-                points_recharge_get: "Recharge",
-                points_subscription_validity: "Issued monthly during subscription period, valid for 30 days from issuance",
-                points_daily_validity: "Expires at 24:00 same day",
-                points_recharge_validity: "Valid for 1 year",
-                points_order: "3. Points Consumption Order",
-                points_order_desc: "Points with earlier expiration are consumed first. Default order: Daily Free Points → Subscription Points → Recharge Points.",
-                points_recharge_rule: "4. Points Recharge",
-                points_recharge_desc: "You can recharge to get points. Points are virtual goods with prepaid service. Please read carefully: Once recharged, points cannot be refunded or exchanged for RMB.",
-                points_price: "5. Recharge Price List",
-                points_contact: "6. Contact Us",
-                points_contact_desc: "If you have any questions about points, please use the 'Contact Us' section to leave feedback and contact information. Our staff will contact you.",
-                points_item_1080: "Generate 1080P Video (10s)",
-                points_item_checkin: "Daily Check-in Reward",
-                points_item_invite: "Invite Friend (User_8891)",
-                points_item_4k: "Generate 4K Video (5s)",
-                points_500: "500 Points",
-                points_750: "750 Points",
-                points_1500: "1500 Points",
-                points_2250: "2250 Points",
-                points_4500: "4500 Points",
-                points_9000: "9000 Points",
-                buy_points: "Buy Points",
-                home_prompt_placeholder: "Describe the video content you want to generate... (Paste images directly here)",
-                create_prompt_placeholder: "Describe the video scene in detail. For example: cinematic quality, aerial view, a vintage sports car driving along a winding coastal road...",
-                clear_content: "Clear content",
-                create_scene_description: "Scene Description",
-                prompt_polish: "Prompt Polish",
-                visual_reference: "Visual Reference",
-                optional: "Optional",
-                upload_first_last_frame: "Click or drag to upload first/last frame",
-                support_jpg_png: "Supports JPG, PNG",
-                consume_points: "Consumes {points} points",
-                search_assets: "Search assets...",
-                phone_number: "Enter your phone number",
-                verification_code: "Verification code",
-                get_verification_code: "Get code",
-                enter_guolaya: "Enter GuolaYa",
-                hero_title_prefix: "With GuolaYa, you're a ",
-                hero_title_suffix: " Master",
-                mode_artist: "Art",
-                mode_storybook: "Story",
-                hero_subtitle: "Input imagination, output the world. AI generates cinematic masterpieces for you.",
-                txt2vid: "Text to Video",
-                img2vid: "Image to Video",
-                style_artist: "Artist",
-                style_storybook: "Storybook",
-                custom_settings: "Custom",
-                duration: "Duration",
-                resolution: "Resolution",
-                aspect_ratio: "Aspect Ratio",
-                discover: "Discover",
-                gallery_search: "Search videos...",
-                all: "All Curated",
-                official_picks: "Official Picks",
-                storybook_picks: "Storybook Picks",
-                artist_picks: "Artist Picks",
-                gallery: "Gallery",
-                cinematic: "Cinematic Shorts",
-                concept: "Concept Posters",
-                anime: "Anime 2D",
-                product: "Product Shots",
-                faq: "FAQ",
-                faq_q1: "How do I earn and spend points?",
-                faq_a1: "Earn free points by daily check-in and inviting friends. Each generation task consumes 10-50 points depending on duration and quality (720P/1080P).",
-                faq_q2: "What aspect ratios are supported?",
-                faq_a2: "We support 16:9 (landscape), 9:16 (portrait/short video), 1:1 (square) and more.",
-                faq_q3: "Are there any format restrictions for uploaded images?",
-                faq_a3: "Supports JPG, PNG formats. Each image should not exceed 10MB, with a minimum resolution of 1080x1080 pixels for best results.",
-                faq_q4: "Can generated videos be used commercially?",
-                faq_a4: "All videos generated on the platform belong to the creator and fully support commercial use on platforms like Xiaohongshu and Douyin.",
-                start_generate: "Generate",
-                recent_tasks: "Recent Tasks",
-                assets_management: "Assets Management",
-                official_messages: "Messages & Notifications",
-                user_name: "Creator_001",
-                user_role: "Standard User",
-                points: "Pts",
-                points_details: "Points Details",
-                points_center: "Points Center",
-                daily_checkin: "Check-in & Invite",
-                logout: "Logout",
-                login_register: "Login / Register",
-                privacy: "Privacy Policy",
-                terms: "Terms of Service",
-                contact: "Contact Us"
-            }
-        };
+        function getCurrentLang() {
+            return getCurrentLanguage() || 'zh';
+        }
+
+        function getLangText(key, lang = getCurrentLang(), values = {}) {
+            return getMessageText(key, lang, values) || '';
+        }
+
+        function isTextToVideoType(type, lang = getCurrentLang()) {
+            const value = String(type || '').trim();
+            return value === getLangText('txt2vid', lang) || value === '文生视频' || value === 'Text to Video';
+        }
+
+        function isImageToVideoType(type, lang = getCurrentLang()) {
+            const value = String(type || '').trim();
+            return value === getLangText('img2vid', lang) || value === '图生视频' || value === 'Image to Video';
+        }
+
+        function isArtistMode(mode, lang = getCurrentLang()) {
+            const value = String(mode || '').trim();
+            return value === getLangText('style_artist', lang) || value === '艺术家' || value === 'Artist';
+        }
 
         // 切换语言的自定义下拉逻辑
         function toggleLangMenu() {
             document.getElementById('langDropdown').classList.toggle('hidden');
         }
 
-        // 获取当前语言
-        function getCurrentLang() {
-            return localStorage.getItem('guolaya-lang') || 'zh';
-        }
-
-        // 设置当前语言
-        function setCurrentLang(lang) {
-            localStorage.setItem('guolaya-lang', lang);
-        }
-
         // 应用翻译到所有元素
         function applyTranslations(lang) {
-            const data = i18nData[lang];
-            if (!data) return;
-
-            // 翻译所有带有 data-i18n 属性的元素
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (data[key]) {
-                    el.innerHTML = data[key];
-                }
-            });
-
-            // 翻译所有带有 data-placeholder 属性的输入框
-            document.querySelectorAll('[data-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-placeholder');
-                if (data[key]) {
-                    el.placeholder = data[key];
-                }
-            });
-
-            // 翻译所有带有 data-i18n-title 属性的元素（title 提示）
-            document.querySelectorAll('[data-i18n-title]').forEach(el => {
-                const key = el.getAttribute('data-i18n-title');
-                if (data[key]) {
-                    el.title = data[key];
-                }
-            });
-
-            // 更新语言下拉框的选中状态
-            document.querySelectorAll('.lang-item').forEach(item => {
-                const itemLang = item.getAttribute('data-i18n');
-                if (itemLang === `lang_${lang}`) {
-                    // 选中状态：粗体 + 深色文字 + 背景色
-                    item.classList.remove('text-zinc-500', 'font-medium');
-                    item.classList.add('text-zinc-900', 'font-bold', 'bg-zinc-50');
-                } else {
-                    // 未选中状态：普通字体 + 浅灰色文字 无背景色
-                    item.classList.add('text-zinc-500', 'font-medium');
-                    item.classList.remove('text-zinc-900', 'font-bold', 'bg-zinc-50');
-                }
-            });
+            switchLanguage(lang, document);
             
             // 更新积分消耗显示
             const costEl = document.getElementById('duration-cost');
@@ -907,8 +634,7 @@ async function loadPublicGallery() {
         // 更新积分消耗显示（支持国际化）
         function updateDurationCost(cost) {
             const lang = getCurrentLang();
-            const data = i18nData[lang] || i18nData['zh'];
-            const template = data.consume_points || '消耗 {points} 积分';
+            const template = getLangText('consume_points', lang) || '消耗 {points} 积分';
             const costEl = document.getElementById('duration-cost');
             if (costEl) {
                 costEl.innerText = cost;
@@ -921,11 +647,10 @@ async function loadPublicGallery() {
         }
 
         // 选择语言并应用翻译
-        function selectLang(langCode, langLabel) {
-            document.getElementById('current-lang-display').innerText = langLabel;
+        function selectLang(langCode, _langLabel) {
+            document.getElementById('current-lang-display').innerText = getLanguageLabel(langCode);
             document.getElementById('langDropdown').classList.add('hidden');
             document.body.setAttribute('data-lang', langCode);
-            setCurrentLang(langCode);
             applyTranslations(langCode);
             
             // 更新模式显示
@@ -939,9 +664,7 @@ async function loadPublicGallery() {
         }
 
         function changeLang(lang) {
-            const langLabels = { zh: '中文', en: 'English' };
-            document.getElementById('current-lang-display').innerText = langLabels[lang] || '中文';
-            setCurrentLang(lang);
+            document.getElementById('current-lang-display').innerText = getLanguageLabel(lang);
             applyTranslations(lang);
             updateModeDisplay();
         }
@@ -963,10 +686,11 @@ async function loadPublicGallery() {
         function updateTitleAndMenu() {
             const modeWord = document.getElementById('mode-word');
             const lang = getCurrentLang();
-            const data = i18nData[lang] || i18nData['zh'];
 
             // 根据当前语言切换模式词
-            const modeText = currentCreateMode === 'artist' ? data.mode_artist : data.mode_storybook;
+            const modeText = currentCreateMode === 'artist'
+                ? getLangText('mode_artist', lang)
+                : getLangText('mode_storybook', lang);
             modeWord.textContent = modeText;
 
             // 亮色蓝色和黄色
@@ -978,7 +702,9 @@ async function loadPublicGallery() {
             document.documentElement.style.setProperty('--mode-word-underline', color);
 
             // 同时更新菜单（但不弹出菜单）
-            const mode = currentCreateMode === 'artist' ? data.style_artist : data.style_storybook;
+            const mode = currentCreateMode === 'artist'
+                ? getLangText('style_artist', lang)
+                : getLangText('style_storybook', lang);
             const modeSpan = document.getElementById('home-current-mode');
             if(modeSpan) {
                 modeSpan.innerText = mode;
@@ -1021,10 +747,11 @@ async function loadPublicGallery() {
         function updateModeDisplay() {
             const modeWord = document.getElementById('mode-word');
             const lang = getCurrentLang();
-            const data = i18nData[lang] || i18nData['zh'];
 
             // 根据当前语言切换模式词
-            const modeText = currentCreateMode === 'artist' ? data.mode_artist : data.mode_storybook;
+            const modeText = currentCreateMode === 'artist'
+                ? getLangText('mode_artist', lang)
+                : getLangText('mode_storybook', lang);
             if(modeWord) modeWord.textContent = modeText;
 
             // 亮色蓝色和黄色
@@ -1097,8 +824,9 @@ async function loadPublicGallery() {
             // 切换到创作页面时，同步首页选择的模式
             if(tabId === 'create') {
                 const lang = getCurrentLang();
-                const data = i18nData[lang] || i18nData['zh'];
-                const modeText = currentCreateMode === 'artist' ? data.style_artist : data.style_storybook;
+                const modeText = currentCreateMode === 'artist'
+                    ? getLangText('style_artist', lang)
+                    : getLangText('style_storybook', lang);
                 document.getElementById('current-model-text').innerText = modeText;
                 const currentModelIcon = document.getElementById('current-model-icon');
                 if (currentModelIcon) {
@@ -1286,8 +1014,7 @@ onMounted(() => {
 
             // 初始化语言
             const savedLang = getCurrentLang();
-            const langLabels = { zh: '中文', en: 'English' };
-            document.getElementById('current-lang-display').innerText = langLabels[savedLang];
+            document.getElementById('current-lang-display').innerText = getLanguageLabel(savedLang);
             applyTranslations(savedLang);
 
             // 初始化创意模式
@@ -1295,8 +1022,9 @@ onMounted(() => {
 
             // 初始化创作界面的模式显示
             const initLang = getCurrentLang();
-            const initData = i18nData[initLang] || i18nData['zh'];
-            const initialModeText = currentCreateMode === 'artist' ? initData.style_artist : initData.style_storybook;
+            const initialModeText = currentCreateMode === 'artist'
+                ? getLangText('style_artist', initLang)
+                : getLangText('style_storybook', initLang);
             document.getElementById('current-model-text').innerText = initialModeText;
             const initialModelIcon = document.getElementById('current-model-icon');
             if (initialModelIcon) {
@@ -1478,25 +1206,26 @@ onMounted(() => {
         }
 
         function setGenType(type) {
+            const lang = getCurrentLang();
             const modeSpan = document.getElementById('home-current-gen-type');
             if (modeSpan) {
                 modeSpan.innerText = type;
-                if(type === '文生视频') modeSpan.setAttribute('data-i18n', 'txt2vid');
-                if(type === '图生视频') modeSpan.setAttribute('data-i18n', 'img2vid');
+                if(isTextToVideoType(type, lang)) modeSpan.setAttribute('data-i18n', 'txt2vid');
+                if(isImageToVideoType(type, lang)) modeSpan.setAttribute('data-i18n', 'img2vid');
             }
 
             const iconEl = document.getElementById('home-gen-type-icon');
             if (iconEl) {
-                if (type === '文生视频') iconEl.setAttribute('data-lucide', 'film');
-                else if (type === '图生视频') iconEl.setAttribute('data-lucide', 'image');
+                if (isTextToVideoType(type, lang)) iconEl.setAttribute('data-lucide', 'film');
+                else if (isImageToVideoType(type, lang)) iconEl.setAttribute('data-lucide', 'image');
                 if(typeof lucide !== 'undefined') lucide.createIcons();
             }
 
             const uploadBox = document.getElementById('home-upload-box');
             if (uploadBox) {
-                if (type === '文生视频') {
+                if (isTextToVideoType(type, lang)) {
                     uploadBox.classList.add('hidden');
-                } else if (type === '图生视频') {
+                } else if (isImageToVideoType(type, lang)) {
                     uploadBox.classList.remove('hidden');
                 }
             }
@@ -1529,12 +1258,13 @@ onMounted(() => {
 
         function setHomeMode(mode) {
             // 更新全局模式
-            currentCreateMode = (mode === '艺术家') ? 'artist' : 'storybook';
+            currentCreateMode = isArtistMode(mode) ? 'artist' : 'storybook';
 
             // 获取当前语言的文本
             const lang = getCurrentLang();
-            const data = i18nData[lang] || i18nData['zh'];
-            const modeText = currentCreateMode === 'artist' ? data.style_artist : data.style_storybook;
+            const modeText = currentCreateMode === 'artist'
+                ? getLangText('style_artist', lang)
+                : getLangText('style_storybook', lang);
 
             const modeSpan = document.getElementById('home-current-mode');
             modeSpan.innerText = modeText;
@@ -2560,12 +2290,13 @@ onMounted(() => {
         }
 
         function setCreateGenType(type, skipToggle) {
+            const lang = getCurrentLang();
             const display = document.getElementById('current-create-gen-type');
             if (display) display.innerText = type;
             const item1 = document.getElementById('create-gen-type-item-1');
             const item2 = document.getElementById('create-gen-type-item-2');
             if (item1 && item2) {
-                if (type === '文生视频') {
+                if (isTextToVideoType(type, lang)) {
                     item1.className = 'px-3 py-2 rounded-lg text-sm font-medium cursor-pointer flex justify-between items-center bg-zinc-100 text-zinc-900 transition-colors';
                     item1.querySelector('.create-gen-type-check-icon').classList.remove('hidden');
                     item2.className = 'px-3 py-2 rounded-lg text-sm font-medium cursor-pointer flex justify-between items-center text-zinc-600 hover:bg-zinc-50 transition-colors';
@@ -2582,12 +2313,13 @@ onMounted(() => {
 
         function setModel(modelName) {
             // 根据传入的中文判断模式
-            currentCreateMode = (modelName === '艺术家') ? 'artist' : 'storybook';
+            currentCreateMode = isArtistMode(modelName) ? 'artist' : 'storybook';
             
             // 获取当前语言的文本
             const lang = getCurrentLang();
-            const data = i18nData[lang] || i18nData['zh'];
-            const modeText = currentCreateMode === 'artist' ? data.style_artist : data.style_storybook;
+            const modeText = currentCreateMode === 'artist'
+                ? getLangText('style_artist', lang)
+                : getLangText('style_storybook', lang);
             
             document.getElementById('current-model-text').innerText = modeText;
             const currentModelIcon = document.getElementById('current-model-icon');
