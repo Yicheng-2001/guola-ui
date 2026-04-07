@@ -463,17 +463,6 @@ onUnmounted(() => {
   width: 14px;
   height: 14px;
 }
-.auth-toast {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #18181b;
-  color: #fff;
-  padding: 10px 16px;
-  border-radius: 999px;
-  z-index: 999;
-}
 @media (min-width: 768px) {
   .auth-right {
     display: flex;

@@ -169,20 +169,4 @@ service.interceptors.response.use(
   },
 );
 
-const request = (options) => {
-  const { url, method, params, data, headers, responseType, ...config } = options;
-  return service({
-    url,
-    method,
-    params,
-    data,
-    ...config,
-    responseType,
-    headers: headers || {
-      "Content-Type": "application/json",
-    },
-  });
-};
-
-export { request };
 export default service;

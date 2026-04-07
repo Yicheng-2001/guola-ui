@@ -752,26 +752,6 @@ onUnmounted(() => {
   color: #71717a;
 }
 
-.login-toast {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  z-index: 200;
-  transform: translateX(-50%);
-  border-radius: 9999px;
-  background: #18181b;
-  padding: 12px 24px;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-  animation: fadeInDown 0.3s ease-out;
-}
-
-.login-toast-hide {
-  animation: fadeOutUp 0.3s ease-out forwards;
-}
-
 @keyframes float {
   0%,
   100% {
@@ -790,30 +770,6 @@ onUnmounted(() => {
 
   to {
     opacity: 1;
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
-@keyframes fadeOutUp {
-  from {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-
-  to {
-    opacity: 0;
-    transform: translate(-50%, -20px);
   }
 }
 </style>

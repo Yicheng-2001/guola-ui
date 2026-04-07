@@ -2739,8 +2739,7 @@ onMounted(() => {
         }
 
         // 消息筛选功能
-        function setMessageFilter(el, type) {
-            void el;
+        function setMessageFilter(_el, type) {
             messageFilterType.value = normalizeMessageFilterType(type);
             refreshLucideIcons();
         }
@@ -2889,7 +2888,7 @@ onMounted(() => {
         }
 onMounted(() => {
   if (typeof lucide !== 'undefined') {
-    if(typeof lucide !== 'undefined') lucide.createIcons();
+    lucide.createIcons();
   }
 })
 </script>
