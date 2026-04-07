@@ -2,6 +2,12 @@
   <div class="login-page">
     <div class="login-container">
       <div class="left-panel">
+        <div class="back-menu-anchor">
+          <button @click="goHome" class="login-back-trigger">
+            <ChevronLeft class="back-trigger-icon" />
+            <span>{{ backHomeText }}</span>
+          </button>
+        </div>
         <div class="lang-menu-anchor">
           <div class="lang-menu-container" ref="langMenuContainerRef">
             <button @click="toggleLangMenu" class="login-lang-trigger">
@@ -34,7 +40,7 @@
           <div class="view-login">
             <div class="logo-wrap">
               <img
-                src="https://placehold.co/260x56/ffffff/111111?text=GuolaYa"
+                src="/guolaya-login-logo.png"
                 class="login-logo"
                 :alt="t('login_logo_alt')"
               />
@@ -133,7 +139,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { Globe, ChevronDown, ArrowRight } from "lucide-vue-next";
+import { Globe, ChevronDown, ChevronLeft, ArrowRight } from "lucide-vue-next";
 import { useLanguage } from "../i18n";
 import {
   getCurrentUserProfile,
@@ -165,6 +171,9 @@ const passwordRequiredText = computed(() =>
 const loginSuccessText = computed(() =>
   currentLang.value === "en" ? "Login successful" : "登录成功"
 );
+const backHomeText = computed(() =>
+  currentLang.value === "en" ? "Back Home" : "返回主页"
+);
 
 function toggleLangMenu() {
   isLangMenuOpen.value = !isLangMenuOpen.value;
@@ -173,6 +182,10 @@ function toggleLangMenu() {
 function selectLang(langCode) {
   setLanguage(langCode);
   isLangMenuOpen.value = false;
+}
+
+function goHome() {
+  router.push("/");
 }
 
 function showToast(message) {
@@ -351,6 +364,7 @@ onUnmounted(() => {
 .login-primary-button,
 .login-page-copy,
 .login-microcopy-row,
+.login-back-trigger,
 .login-lang-trigger,
 .lang-item {
   font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
@@ -367,6 +381,7 @@ onUnmounted(() => {
 
 .login-page-copy,
 .login-microcopy-row,
+.login-back-trigger,
 .login-lang-trigger,
 .login-input,
 .lang-item {
@@ -395,8 +410,39 @@ onUnmounted(() => {
   z-index: 20;
 }
 
+.back-menu-anchor {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 20;
+}
+
 .lang-menu-container {
   position: relative;
+}
+
+.login-back-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e4e4e7;
+  border-radius: 9999px;
+  background: #fff;
+  padding: 6px 12px;
+  color: #52525b;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #18181b;
+    border-color: #d4d4d8;
+  }
+}
+
+.back-trigger-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .login-lang-trigger {
