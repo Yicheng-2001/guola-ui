@@ -27,7 +27,7 @@
             <div class="w-[1px] h-6 md:w-8 md:h-[1px] bg-zinc-200 my-0 mx-1 md:my-2 md:mx-0"></div>
 
             <!-- 消息（官方通知） -->
-            <div id="nav-messages" @click="switchGlobalTab('messages')" class="nav-item text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 relative group flex flex-col items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl cursor-pointer transition-all" data-title="nav_messages" title="消息" data-i18n-title="nav_messages">
+            <div v-if="isLoggedIn" id="nav-messages" @click="switchGlobalTab('messages')" class="nav-item text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 relative group flex flex-col items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl cursor-pointer transition-all" data-title="nav_messages" title="消息" data-i18n-title="nav_messages">
                 <i data-lucide="bell" class="w-[22px] h-[22px] stroke-[1.5]"></i>
                 <div class="active-indicator hidden absolute left-1/2 bottom-0 -translate-x-1/2 w-6 h-1 rounded-t-full md:left-0 md:top-1/2 md:-translate-y-1/2 md:translate-x-0 md:w-1 md:h-6 bg-zinc-900 md:rounded-r-full md:rounded-tl-none"></div>
             </div>

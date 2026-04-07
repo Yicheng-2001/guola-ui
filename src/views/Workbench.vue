@@ -390,6 +390,10 @@ async function loadCreditTransactions() {
 }
 
 async function loadNotifications() {
+  if (!getStoredToken()) {
+    notificationMessages.value = []
+    return
+  }
   try {
     const result = await getNotifications()
     const items = extractNotificationItems(result)
