@@ -94,7 +94,7 @@
 
               <div class="login-microcopy-row">
                 <div @click="$router.push('/register')" class="microcopy-link">{{ t('go_register') }}</div>
-                <div v-show="false" @click="$router.push('/forgot-password')" class="microcopy-link">{{ t('go_forgot') }}</div>
+                <div @click="$router.push('/forgot-password')" class="microcopy-link">{{ t('go_forgot') }}</div>
               </div>
             </div>
           </div>
@@ -142,10 +142,8 @@ import { useRouter } from "vue-router";
 import { Globe, ChevronDown, ChevronLeft, ArrowRight } from "lucide-vue-next";
 import { useLanguage } from "../i18n";
 import {
-  getCurrentUserProfile,
   loginByPassword,
   setLoginToken,
-  setLoginUserProfile,
 } from "../api/services";
 
 const { currentLang, setLanguage, getLanguageLabel, t } = useLanguage();
@@ -235,27 +233,6 @@ function extractToken(payload) {
   return String(payload?.token || payload?.data?.token || "").trim();
 }
 
-function extractUserProfile(payload) {
-  const raw = payload?.data || payload || {};
-  if (!raw || typeof raw !== "object") return null;
-
-  const displayName =
-    raw.username ||
-    raw.user_name ||
-    raw.nickname ||
-    raw.name ||
-    raw.account ||
-    raw.email ||
-    raw.mobile ||
-    raw.phone ||
-    "";
-
-  return {
-    ...raw,
-    display_name: displayName ? String(displayName).trim() : "",
-  };
-}
-
 async function handleLogin() {
   if (loggingIn.value) return;
 
@@ -287,15 +264,6 @@ async function handleLogin() {
     }
 
     setLoginToken(token);
-    try {
-      const profileResult = await getCurrentUserProfile();
-      const profile = extractUserProfile(profileResult);
-      if (profile) {
-        setLoginUserProfile(profile);
-      }
-    } catch (profileError) {
-      // 用户信息拉取失败不阻断登录主流程
-    }
     showToast(String(message || loginSuccessText.value));
     router.push("/");
   } catch (error) {
