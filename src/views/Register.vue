@@ -114,7 +114,7 @@ import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { Globe, ChevronDown, Check } from "lucide-vue-next";
 import { useLanguage } from "../i18n";
-import { registerByEmail, sendSms } from "../api/services";
+import { loginByPassword, registerByEmail, sendSms, setLoginToken } from "../api/services";
 
 const { currentLang, setLanguage, getLanguageLabel, t } = useLanguage();
 const router = useRouter();
@@ -212,6 +212,30 @@ function isValidPassword(value) {
   return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(value);
 }
 
+function extractMessage(payload) {
+  return (
+    payload?.message ||
+    payload?.msg ||
+    payload?.data?.message ||
+    payload?.data?.msg ||
+    payload?.response?.data?.message ||
+    payload?.response?.data?.msg ||
+    payload?.response?.data?.data?.message ||
+    payload?.response?.data?.data?.msg ||
+    payload?.error?.message ||
+    ""
+  );
+}
+
+function extractToken(payload) {
+  const accessToken = payload?.access_token ?? payload?.data?.access_token;
+  if (typeof accessToken === "string") return accessToken.trim();
+  if (accessToken && typeof accessToken === "object") {
+    return String(accessToken.token || accessToken.access_token || "").trim();
+  }
+  return String(payload?.token || payload?.data?.token || "").trim();
+}
+
 async function startCountdown() {
   if (countdown.value > 0) return;
   const email = phone.value.trim();
@@ -225,7 +249,7 @@ async function startCountdown() {
   }
 
   try {
-    const result = await sendSms(email);
+    const result = await sendSms(email, true);
     if (result) {
       hasSentCode.value = true;
       showToast(t("code_sent"));
@@ -291,17 +315,26 @@ async function handleRegister() {
       password: pwd,
       confirm_password: confirmPwd,
     });
-    const message = result?.message || result?.msg || registerSuccessText.value;
-    showToast(String(message));
-    setTimeout(() => {
-      router.push("/login");
-    }, 800);
+    let token = extractToken(result);
+    if (!token) {
+      const loginResult = await loginByPassword({
+        login_type: "password",
+        username: email,
+        password: pwd,
+      });
+      token = extractToken(loginResult);
+    }
+
+    if (!token) {
+      showToast(String(extractMessage(result) || t("network_error")));
+      return;
+    }
+
+    setLoginToken(token);
+    showToast(String(extractMessage(result) || registerSuccessText.value));
+    router.push("/");
   } catch (error) {
-    const message =
-      error?.response?.data?.message ||
-      error?.response?.data?.msg ||
-      error?.message ||
-      t("network_error");
+    const message = extractMessage(error) || t("network_error");
     showToast(String(message));
   } finally {
     registering.value = false;

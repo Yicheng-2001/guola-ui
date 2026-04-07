@@ -43,19 +43,19 @@
           <div class="plans-grid">
             <div
               v-for="(plan, index) in plans"
-              :key="plan.points"
+              :key="plan.id || `${plan.points}-${index}`"
               class="pricing-card"
               :class="{ selected: index === selectedPlanIndex }"
               @click="selectPlan(index)"
             >
-              <div v-if="plan.badgeKey" :class="plan.badgeClass">{{ t(plan.badgeKey) }}</div>
+              <div v-if="plan.badgeText" :class="plan.badgeClass">{{ plan.badgeText }}</div>
 
               <div class="card-top">
                 <div>
                   <h3 class="card-title">
                     {{ plan.points }} <span class="card-unit">{{ t('points') }}</span>
                   </h3>
-                  <p class="card-copy">{{ t(plan.descKey) }}</p>
+                  <p class="card-copy">{{ plan.description }}</p>
                 </div>
                 <div class="check-circle">
                   <div class="check-dot"></div>
@@ -63,7 +63,7 @@
               </div>
 
               <div class="card-price-row">
-                <span class="card-currency">¥</span>
+                <span class="card-currency">$</span>
                 <span class="card-price">{{ plan.price }}</span>
               </div>
             </div>
@@ -145,45 +145,35 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { getCreditBalance, getLoginToken } from "../api/services";
+import { getCreditBalance, getCreditPackages, getLoginToken } from "../api/services";
 
 const { t } = useI18n();
 
-const plans = [
-  { points: 500, price: 30, descKey: "buy_points_plan_desc_500" },
-  { points: 750, price: 45, descKey: "buy_points_plan_desc_750" },
-  {
-    points: 1500,
-    price: 90,
-    descKey: "buy_points_plan_desc_1500",
-    badgeKey: "buy_points_badge_recommended",
-    badgeClass: "recommend-badge"
-  },
-  { points: 2250, price: 135, descKey: "buy_points_plan_desc_2250" },
-  {
-    points: 4500,
-    price: 250,
-    descKey: "buy_points_plan_desc_4500",
-    badgeKey: "buy_points_badge_workshop",
-    badgeClass: "recommend-badge-workshop"
-  },
-  { points: 9000, price: 500, descKey: "buy_points_plan_desc_9000" }
-];
+const plans = ref([]);
 
-const selectedPlanIndex = ref(2);
+const selectedPlanIndex = ref(0);
 const selectedPayMethod = ref("wechat");
 const availablePoints = ref(0);
 
-const selectedPlan = computed(() => plans[selectedPlanIndex.value] || plans[0]);
+const selectedPlan = computed(() => {
+  const current = plans.value[selectedPlanIndex.value];
+  if (current) return current;
+  return {
+    id: "",
+    points: 0,
+    price: "0.00",
+    description: "",
+    badgeText: "",
+    badgeClass: ""
+  };
+});
 const availablePointsDisplay = computed(() => formatBalanceDisplay(availablePoints.value));
 
 const summaryPointsText = computed(() =>
   t("buy_points_amount_format", { points: selectedPlan.value.points })
 );
 
-const summaryPriceText = computed(() =>
-  t("buy_price_format", { price: selectedPlan.value.price })
-);
+const summaryPriceText = computed(() => `$${formatPriceDisplay(selectedPlan.value.price)}`);
 
 function selectPlan(index) {
   selectedPlanIndex.value = index;
@@ -191,6 +181,57 @@ function selectPlan(index) {
 
 function setPayMethod(method) {
   selectedPayMethod.value = method;
+}
+
+function getBadgeText(value) {
+  const badge = String(value || "").trim();
+  if (!badge) return "";
+  if (badge === "ValuePick") return "性价比优选";
+  if (badge === "StudioPick") return "工作室首选";
+  return badge;
+}
+
+function getBadgeClass(value) {
+  const badge = String(value || "").trim();
+  if (!badge) return "";
+  if (badge === "ValuePick") return "recommend-badge";
+  if (badge === "StudioPick") return "recommend-badge-workshop";
+  return "recommend-badge";
+}
+
+function formatPriceDisplay(value) {
+  const num = Number(value);
+  if (Number.isFinite(num) && num >= 0) return num.toFixed(2);
+  const text = String(value || "").trim();
+  if (!text) return "0.00";
+  return text;
+}
+
+function extractCreditPackageItems(payload = {}) {
+  const candidates = [payload?.data, payload?.data?.data, payload];
+  for (const items of candidates) {
+    if (Array.isArray(items)) return items;
+  }
+  return [];
+}
+
+function normalizeCreditPackage(item = {}, index = 0) {
+  const credits = Number(item.credits);
+  const points = Number.isFinite(credits) && credits >= 0 ? credits : 0;
+  const price = formatPriceDisplay(item.price);
+  const description = String(item.description || "").trim();
+  const badgeRaw = String(item.badge || "").trim();
+  const sortOrder = Number(item.sort_order);
+
+  return {
+    id: String(item.id || `credit-package-${index}`),
+    points,
+    price,
+    description: description || "-",
+    badgeText: getBadgeText(badgeRaw),
+    badgeClass: getBadgeClass(badgeRaw),
+    sortOrder: Number.isFinite(sortOrder) ? sortOrder : index + 1
+  };
 }
 
 function parseBalanceNumber(value) {
@@ -238,7 +279,38 @@ async function loadAvailablePoints() {
   }
 }
 
+async function loadCreditPackages() {
+  const token = getLoginToken();
+  if (!token) {
+    plans.value = [];
+    selectedPlanIndex.value = 0;
+    return;
+  }
+  try {
+    const result = await getCreditPackages();
+    const items = extractCreditPackageItems(result);
+    const normalized = items
+      .map((item = {}, index = 0) => normalizeCreditPackage(item, index))
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    plans.value = normalized;
+    if (!normalized.length) {
+      selectedPlanIndex.value = 0;
+      return;
+    }
+    if (selectedPlanIndex.value >= normalized.length) {
+      selectedPlanIndex.value = 0;
+      return;
+    }
+    const recommendedIndex = normalized.findIndex((item = {}) => item.badgeText === "性价比优选");
+    selectedPlanIndex.value = recommendedIndex >= 0 ? recommendedIndex : 0;
+  } catch (error) {
+    plans.value = [];
+    selectedPlanIndex.value = 0;
+  }
+}
+
 onMounted(() => {
+  loadCreditPackages();
   loadAvailablePoints();
   if (typeof lucide !== "undefined") {
     lucide.createIcons();

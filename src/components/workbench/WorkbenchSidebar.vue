@@ -64,12 +64,12 @@
 
                 <!-- 个人中心菜单 (默认隐藏) -->
                 <div id="userDropdown" class="hidden absolute bottom-14 right-0 md:left-14 md:bottom-0 md:right-auto w-48 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-zinc-100 p-2 py-3 z-50 animate-in-slide-up">
-                    <div class="px-3 pb-3 mb-2 border-b border-zinc-100 flex justify-between items-center">
-                        <div>
-                            <p class="text-sm font-bold text-zinc-900">{{ userDisplayName }}</p>
+                    <div class="px-3 pb-3 mb-2 border-b border-zinc-100 flex items-center justify-between gap-2">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-bold text-zinc-900 truncate">{{ userDisplayName }}</p>
                             <p class="text-xs text-zinc-500 mt-0.5" data-i18n="user_role">普通用户</p>
                         </div>
-                        <div class="text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-md">
+                        <div class="shrink-0 whitespace-nowrap text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-md">
                             {{ balanceDisplay }} <span data-i18n="points">积分</span>
                         </div>
                     </div>

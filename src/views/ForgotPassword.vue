@@ -223,7 +223,7 @@ async function startCountdown() {
   }
 
   try {
-    const result = await sendSms(email);
+    const result = await sendSms(email, false);
     if (!result) {
       showToast(t("code_send_failed"));
       return;

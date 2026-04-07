@@ -138,25 +138,38 @@ async function sha256Hex(value) {
   return sha256HexFallback(text);
 }
 
-export function sendSms(email) {
+export function sendSms(email, isRegister) {
   return request({
     url: "/v1/auth/send/email",
     headers: {
       isToken: false,
     },
     method: "post",
-    data: { email },
+    data: {
+      email,
+      is_register: Boolean(isRegister),
+    },
   });
 }
 
-export function registerByEmail(data) {
+export async function registerByEmail(data) {
+  const email = String(data?.email || "").trim();
+  const code = String(data?.code || "").trim();
+  const plainPassword = String(data?.password || "");
+  const password = await sha256Hex(plainPassword);
+
   return request({
     url: "/v1/auth/register/email",
     headers: {
       isToken: false,
     },
     method: "post",
-    data,
+    data: {
+      code,
+      email,
+      password,
+      phone: "",
+    },
   });
 }
 
@@ -189,6 +202,16 @@ export function getCurrentUserProfile() {
 export function getCreditBalance() {
   return request({
     url: "/v1/credit/balance",
+    method: "get",
+    headers: {
+      noError: true,
+    },
+  });
+}
+
+export function getCreditPackages() {
+  return request({
+    url: "/v1/credit/packages",
     method: "get",
     headers: {
       noError: true,
