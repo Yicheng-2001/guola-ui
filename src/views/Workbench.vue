@@ -1307,7 +1307,6 @@ onMounted(() => {
             <span class="text-[10px]">添加图片</span>
         `
         let homeUploadedFiles = []
-        let homeActiveFileIndex = -1
         let createUploadedFile = null
 
         function isImageFile(file = {}) {
@@ -1489,47 +1488,8 @@ onMounted(() => {
         }
 
         function renderHomePrimaryFile() {
-            const imgEl = document.getElementById('home-pasted-image')
-            const placeholderEl = document.getElementById('home-upload-placeholder')
-            const removeBtn = document.getElementById('home-remove-img-btn')
-            const imageBox = document.getElementById('home-image-box')
-
-            if (!imgEl || !placeholderEl || !removeBtn || !imageBox) return
-
-            if (!homeUploadedFiles.length) {
-                resetHomeImageBox()
-                return
-            }
-
-            if (homeActiveFileIndex < 0 || homeActiveFileIndex >= homeUploadedFiles.length) {
-                homeActiveFileIndex = homeUploadedFiles.length - 1
-            }
-
-            const activeFile = homeUploadedFiles[homeActiveFileIndex]
-            const hasPreview = !!activeFile?.previewUrl
-
-            if (hasPreview) {
-                imgEl.src = activeFile.previewUrl
-                imgEl.classList.remove('hidden')
-                placeholderEl.classList.add('hidden')
-            } else {
-                imgEl.src = ''
-                imgEl.classList.add('hidden')
-                placeholderEl.classList.remove('hidden')
-                placeholderEl.innerHTML = `
-                    <i data-lucide="file" class="w-5 h-5 mb-1"></i>
-                    <span class="text-[10px] px-1 text-center">${truncateText(activeFile?.name || '文件')}</span>
-                `
-            }
-
-            removeBtn.classList.remove('hidden')
-            removeBtn.classList.add('flex')
-            imageBox.classList.remove('border-dashed')
-            imageBox.classList.add('border-solid')
-
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons()
-            }
+            // 首页上传框始终作为“下一次上传入口”，不显示已上传文件预览
+            resetHomeImageBox()
         }
 
         function updateHomeImageTags() {
@@ -1539,7 +1499,7 @@ onMounted(() => {
 
             homeUploadedFiles.forEach((record, index) => {
                 const tag = document.createElement('div')
-                tag.className = 'inline-flex items-center gap-2 pl-1 pr-1.5 py-1 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-xs text-zinc-600 cursor-pointer transition-colors group'
+                tag.className = 'inline-flex items-center gap-2 pl-1 pr-1.5 py-1 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-xs text-zinc-600 transition-colors group'
 
                 const thumb = document.createElement('div')
                 thumb.className = 'w-5 h-5 rounded border border-zinc-200 overflow-hidden bg-white flex items-center justify-center shrink-0'
@@ -1570,10 +1530,6 @@ onMounted(() => {
                 tag.appendChild(thumb)
                 tag.appendChild(text)
                 tag.appendChild(removeBtn)
-                tag.addEventListener('click', () => {
-                    homeActiveFileIndex = index
-                    renderHomePrimaryFile()
-                })
                 tagsContainer.appendChild(tag)
             })
 
@@ -1592,7 +1548,6 @@ onMounted(() => {
                     const uploadParams = await uploadFileToOss(file)
                     const record = createUploadRecord(file, uploadParams, 'home')
                     homeUploadedFiles.push(record)
-                    homeActiveFileIndex = homeUploadedFiles.length - 1
                     successCount += 1
                 } catch (error) {
                     showToast(`文件上传失败：${extractApiMessage(error) || '请重试'}`)
@@ -1641,14 +1596,10 @@ onMounted(() => {
             }
 
             if (!homeUploadedFiles.length) {
-                homeActiveFileIndex = -1
-                resetHomeImageBox()
                 setGenType('文生视频')
-            } else {
-                homeActiveFileIndex = Math.min(index, homeUploadedFiles.length - 1)
-                renderHomePrimaryFile()
             }
 
+            renderHomePrimaryFile()
             updateHomeImageTags()
             updateUploadDebugState()
         }
@@ -1926,7 +1877,6 @@ onMounted(() => {
         function removeHomeImage() {
             homeUploadedFiles.forEach((record) => revokeFilePreview(record))
             homeUploadedFiles = []
-            homeActiveFileIndex = -1
             resetHomeImageBox()
             updateHomeImageTags()
             setGenType('文生视频')

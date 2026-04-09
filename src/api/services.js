@@ -143,6 +143,7 @@ export function sendSms(email, isRegister) {
     url: "/v1/auth/send/email",
     headers: {
       isToken: false,
+      noError: true,
     },
     method: "post",
     data: {
@@ -215,6 +216,21 @@ export function getCreditPackages() {
     method: "get",
     headers: {
       noError: true,
+    },
+  });
+}
+
+export function createPaymentSession(creditAmount) {
+  const token = getLoginToken();
+  return request({
+    url: "/v1/payments/create-session",
+    method: "post",
+    headers: {
+      noError: true,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    params: {
+      credit_amount: creditAmount,
     },
   });
 }

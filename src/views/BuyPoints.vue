@@ -129,7 +129,11 @@
                 </div>
               </div>
 
-              <button @click="$router.push('/pay-success')" class="pay-submit-btn">
+              <button
+                class="pay-submit-btn"
+                :disabled="isCreatingSession || !plans.length"
+                @click="handlePayNow"
+              >
                 <i data-lucide="shield-check" class="icon-sm"></i> {{ t('buy_points_pay_now') }}
               </button>
             </div>
@@ -145,7 +149,12 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { getCreditBalance, getCreditPackages, getLoginToken } from "../api/services";
+import {
+  createPaymentSession,
+  getCreditBalance,
+  getCreditPackages,
+  getLoginToken
+} from "../api/services";
 
 const { t } = useI18n();
 
@@ -154,6 +163,7 @@ const plans = ref([]);
 const selectedPlanIndex = ref(0);
 const selectedPayMethod = ref("wechat");
 const availablePoints = ref(0);
+const isCreatingSession = ref(false);
 
 const selectedPlan = computed(() => {
   const current = plans.value[selectedPlanIndex.value];
@@ -205,6 +215,70 @@ function formatPriceDisplay(value) {
   const text = String(value || "").trim();
   if (!text) return "0.00";
   return text;
+}
+
+function showToast(message, type = "error") {
+  const text = String(message || "").trim();
+  if (!text) return;
+
+  const elMessage = globalThis?.ElMessage;
+  if (elMessage) {
+    elMessage({ message: text, type });
+    return;
+  }
+
+  if (type === "error") {
+    console.error(text);
+    return;
+  }
+  console.warn(text);
+}
+
+function extractApiMessage(payload = {}) {
+  const candidates = [
+    payload?.response?.data?.message,
+    payload?.response?.data?.msg,
+    payload?.data?.message,
+    payload?.data?.msg,
+    payload?.message,
+    payload?.msg,
+    payload?.error?.message
+  ];
+  for (const item of candidates) {
+    const text = String(item || "").trim();
+    if (!text) continue;
+    if (/^Request failed with status code \d+$/i.test(text)) continue;
+    return text;
+  }
+  return "";
+}
+
+function extractCheckoutUrl(payload = {}) {
+  const candidates = [
+    payload?.data?.checkout_url,
+    payload?.checkout_url,
+    payload?.data?.data?.checkout_url
+  ];
+  for (const item of candidates) {
+    const url = String(item || "").trim();
+    if (!url) continue;
+    return url;
+  }
+  return "";
+}
+
+function toNumberAmount(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const normalized = typeof value === "string" ? value.replace(/,/g, "").trim() : value;
+  const num = Number(normalized);
+  if (!Number.isFinite(num) || num <= 0) return null;
+  return num;
+}
+
+function resolveCreditAmount(plan = {}) {
+  const priceNumber = toNumberAmount(plan.price);
+  if (priceNumber === null) return 0;
+  return Math.max(1, Math.round(priceNumber * 10));
 }
 
 function extractCreditPackageItems(payload = {}) {
@@ -306,6 +380,37 @@ async function loadCreditPackages() {
   } catch (error) {
     plans.value = [];
     selectedPlanIndex.value = 0;
+  }
+}
+
+async function handlePayNow() {
+  if (isCreatingSession.value) return;
+
+  const token = getLoginToken();
+  if (!token) {
+    showToast("请先登录后再支付");
+    return;
+  }
+
+  const creditAmount = resolveCreditAmount(selectedPlan.value);
+  if (!creditAmount) {
+    showToast("当前套餐金额无效，请刷新后重试");
+    return;
+  }
+
+  isCreatingSession.value = true;
+  try {
+    const result = await createPaymentSession(creditAmount);
+    const checkoutUrl = extractCheckoutUrl(result);
+    if (!checkoutUrl) {
+      throw new Error(extractApiMessage(result) || "未获取到支付链接，请稍后重试");
+    }
+    window.location.assign(checkoutUrl);
+  } catch (error) {
+    const message = extractApiMessage(error) || "创建支付会话失败，请稍后重试";
+    showToast(message);
+  } finally {
+    isCreatingSession.value = false;
   }
 }
 
@@ -792,6 +897,14 @@ onMounted(() => {
   }
   &:active {
     transform: scale(0.95);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    box-shadow: none;
+  }
+  &:disabled:hover {
+    background: #18181b;
   }
 }
 .footer-copy {

@@ -210,6 +210,19 @@ function isValidPassword(value) {
   return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(value);
 }
 
+function extractMessage(payload) {
+  return (
+    payload?.response?.data?.message ||
+    payload?.response?.data?.msg ||
+    payload?.response?.data?.data?.message ||
+    payload?.response?.data?.data?.msg ||
+    payload?.message ||
+    payload?.msg ||
+    payload?.error?.message ||
+    ""
+  );
+}
+
 async function startCountdown() {
   if (countdown.value > 0) return;
   const email = phone.value.trim();
@@ -245,7 +258,8 @@ async function startCountdown() {
       }
     }, 1000);
   } catch (error) {
-    showToast(t("network_error"));
+    const message = extractMessage(error) || t("network_error");
+    showToast(String(message));
   }
 }
 

@@ -42,6 +42,15 @@ const routes = [
     component: PaySuccess
   },
   {
+    path: '/payment/success',
+    alias: '/payment/success/',
+    redirect: (to) => ({
+      path: '/pay-success',
+      query: to.query,
+      hash: to.hash
+    })
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/'
   }
